@@ -10,6 +10,8 @@ export default defineConfig(() => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
+  // Mermaid and the editor are large; that is fine for a desktop app loading from disk.
+  build: { chunkSizeWarningLimit: 2000 },
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,

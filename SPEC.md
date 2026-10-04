@@ -20,7 +20,7 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 ## Stack
 
 - **Shell:** Tauri 2 (Rust backend, system webview).
-- **UI:** TypeScript + Vite. Framework choice (Svelte or vanilla) is decided at implementation; keep it small.
+- **UI:** vanilla TypeScript + Vite (no framework).
 - **Editor:** CodeMirror 6.
 - **Rendering:** Markdown parsed to HTML (markdown-it), math via KaTeX.
 - **Diagrams:** Mermaid, rendered from fenced code blocks.
@@ -41,9 +41,9 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 2. **Edit/read toggle.** One keystroke switches a note between the Markdown source and the rendered view. The rendered view is the default when opening a note.
 3. **Live math, diagram and image rendering** in the rendered view.
 4. **Paste or drag an image** into the editor: it is saved to `assets/` and a link is inserted.
-5. **Embeds** via `::embed[...]`, sandboxed (no access to the vault or the app).
-6. **Quick switcher** (`Ctrl/Cmd+P`): fuzzy-find a note by filename.
-7. **Focus mode:** hides the sidebar and all chrome; only the note is visible.
+5. **Embeds** via `::embed[...]`, sandboxed (no access to the app).
+6. **Quick switcher** (`Ctrl/Cmd+P`): fuzzy-find a note by filename. Typing a name that does not exist offers to create it.
+7. **Focus mode** (`Ctrl/Cmd+Shift+F`, `Esc` to leave): hides the sidebar and makes the window fullscreen; only the note is visible.
 8. **Light and dark themes**, following the system setting.
 9. **Autosave.**
 
@@ -52,23 +52,37 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 - Single column, centered, ~70 characters wide.
 - Sidebar (note list) is hidden by default; toggled with `Ctrl/Cmd+\`.
 - No visible toolbar or menu bar clutter; actions are keyboard-driven.
-- Typeface: a Latin Modern or Computer Modern-style serif for body and a matching monospace for code. Bundle the fonts so rendering is identical on every OS.
+- Typeface: CMU Serif (Computer Modern) for body and CMU Typewriter for code and the editor. The fonts are bundled so rendering is identical on every OS.
+- Paragraphs are justified and hyphenated using the system language.
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl/Cmd+O` | Open a vault folder |
+| `Ctrl/Cmd+P` | Find or create a note |
+| `Ctrl/Cmd+E` | Toggle reading / writing |
+| `Ctrl/Cmd+\` | Toggle the note list |
+| `Ctrl/Cmd+Shift+F` | Focus mode |
+| `Ctrl/Cmd+S` | Save now (autosave also runs) |
 
 ## Security
 
-- Embedded iframes use the `sandbox` attribute with scripts allowed but no same-origin access, and are blocked from reaching local files outside the note's own folder.
-- No network calls except to load an explicitly embedded https URL.
+- All file access goes through Rust commands confined to the open vault; paths with `..` or absolute paths are rejected.
+- Embedded iframes use `sandbox="allow-scripts"` (no same-origin access, no access to the app). Local embeds must resolve to a file inside the vault.
+- Raw HTML in Markdown is not rendered.
+- A Content Security Policy blocks network requests except embedded https iframes.
 
 ## Milestones
 
-1. **M0, skeleton:** Tauri app builds and runs on Linux, macOS and Windows (CI matrix).
+All v1 milestones are implemented.
+
+1. **M0, skeleton:** Tauri app builds on Linux, macOS and Windows (CI matrix).
 2. **M1, reading:** open a vault, render Markdown + math + typography.
 3. **M2, writing:** CodeMirror editor, edit/read toggle, autosave.
 4. **M3, embeds:** images (paste/drag), Mermaid, `::embed`.
-5. **M4, polish:** quick switcher, focus mode, themes, packaged installers.
+5. **M4, polish:** quick switcher, focus mode, themes, installers via the release workflow.
 
-## Open questions
+## Decisions
 
-- Svelte or vanilla TypeScript for the UI?
-- Should the editor be source-only, or live-preview (like Obsidian)? v1 assumes source-only with the toggle above.
-- Should notes support a front-matter block (title, tags)? Not in v1.
+- UI is vanilla TypeScript.
+- The editor is source-only, with the read/write toggle (no live preview).
+- No front-matter in v1.
