@@ -8,7 +8,9 @@ export async function drawDiagrams(root: HTMLElement): Promise<void> {
 
   mermaidModule ??= import("mermaid").then((m) => m.default);
   const mermaid = await mermaidModule;
-  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  // Exporting forces the light theme (data-theme="light") whatever the system uses.
+  const forcedLight = document.documentElement.dataset.theme === "light";
+  const dark = !forcedLight && matchMedia("(prefers-color-scheme: dark)").matches;
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: "strict",

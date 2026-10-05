@@ -62,6 +62,7 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 | `Ctrl/Cmd+P` | Find or create a note |
 | `Ctrl/Cmd+E` | Toggle reading / writing |
 | `Ctrl/Cmd+S` | Save now (autosave also runs) |
+| `Ctrl/Cmd+Shift+E` | Export as PDF |
 | `Ctrl/Cmd+B` | Toggle the note list |
 | `Ctrl/Cmd+Shift+F` | Focus mode |
 | `Ctrl/Cmd+O` | Open a vault folder |
@@ -75,6 +76,12 @@ Shortcuts never use Alt, because AltGr arrives as Ctrl+Alt on Windows (needed fo
 - Minimise, maximise and close sit faint in the top-right corner; the top 32 px strip drags the window. macOS keeps its native title bar.
 - Save state: "Saving…", "Saved" (fades after 2 s), or "Couldn't save · Retry" (stays until resolved).
 - The start screen lists up to five recent folders.
+
+### Export
+
+- "Export as PDF" opens the system print dialog ("Save as PDF") with a print stylesheet: A4, page numbers, no app chrome, headings kept with their content, figures and tables not split, long code wrapped, external link addresses printed.
+- Export always renders in the light theme. Diagrams are redrawn light; local embeds load eagerly and receive `#quill-theme=light` in their URL so they can switch palette (embeds that ignore it print as they are).
+- The PDF file name defaults to the note title.
 
 ## Security
 

@@ -28,6 +28,8 @@ graph LR
 
 Paste or drop an image into the editor to save it into `assets/` and insert the link.
 
+Exported PDFs always use the light theme. Your own HTML embeds can follow it: when exporting, Quill adds `#quill-theme=light` to their address, so check `location.hash` and switch to light colours.
+
 ## Shortcuts
 
 `Ctrl` on Linux and Windows, `Cmd` on macOS.
@@ -39,6 +41,7 @@ Paste or drop an image into the editor to save it into `assets/` and insert the 
 | `Ctrl+P` | Find or create a note |
 | `Ctrl+E` | Switch between reading and writing |
 | `Ctrl+S` | Save now (it also autosaves) |
+| `Ctrl+Shift+E` | Export as PDF (choose "Save as PDF" in the print dialog) |
 | `Ctrl+B` | Show or hide the note list |
 | `Ctrl+Shift+F` | Focus mode (`Esc` to leave) |
 | `Ctrl+O` | Open a folder of notes |

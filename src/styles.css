@@ -24,6 +24,18 @@
   }
 }
 
+/* Forced light theme, used while exporting so paper never gets the dark palette. */
+:root[data-theme="light"] {
+  --bg: #fdfcf9;
+  --fg: #1c1b19;
+  --muted: #8b877f;
+  --rule: #e2dfd8;
+  --accent: #2b4c8c;
+  --code-bg: #f4f2ed;
+  --panel: #f6f4ef;
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -831,4 +843,92 @@ body.focus:not(.save-error) #pill {
   border-radius: 4px;
   font-size: 0.85rem;
   z-index: 4;
+}
+
+/* ---------- export (print to PDF) ---------- */
+
+@page {
+  size: A4;
+  margin: 22mm 25mm 24mm;
+
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: "CMU Serif", serif;
+    font-size: 9pt;
+    color: #8b877f;
+  }
+}
+
+@media print {
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  #scroller {
+    height: auto;
+    overflow: visible;
+    margin-left: 0 !important;
+  }
+
+  #sidebar,
+  #pill,
+  #grip,
+  #window-controls,
+  #drag-strip,
+  #palette,
+  #switcher,
+  #toast,
+  #welcome,
+  #editor {
+    display: none !important;
+  }
+
+  .page {
+    max-width: none;
+    padding: 0;
+  }
+
+  #doc h1,
+  #doc h2,
+  #doc h3,
+  #doc h4 {
+    break-after: avoid;
+  }
+
+  #doc table,
+  #doc img,
+  #doc figure,
+  #doc blockquote,
+  #doc .katex-display,
+  #doc .mermaid {
+    break-inside: avoid;
+  }
+
+  #doc p,
+  #doc li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Paper cannot scroll: wrap long code lines instead of cutting them. */
+  #doc pre {
+    white-space: pre-wrap;
+    overflow: visible;
+  }
+
+  /* Paper cannot be clicked: print where external links go. */
+  #doc a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: var(--muted);
+    word-break: break-all;
+  }
 }

@@ -180,9 +180,22 @@ function show(view: "welcome" | "read" | "edit") {
   editorEl.hidden = view !== "edit";
 }
 
+/** Resolves when the embeds of the last render have loaded (or after a timeout). */
+let embedsReady: Promise<void> = Promise.resolve();
+
+function whenLoaded(frames: HTMLIFrameElement[], timeoutMs = 3000): Promise<void> {
+  const loads = frames.map((f) => new Promise<void>((resolve) => f.addEventListener("load", () => resolve(), { once: true })));
+  return Promise.race([Promise.all(loads).then(() => undefined), new Promise<void>((r) => setTimeout(r, timeoutMs))]);
+}
+
 async function renderDoc() {
   if (!state.path) return;
-  doc.innerHTML = render(state.text, state.path);
+  const forced = document.documentElement.dataset.theme === "light" ? "light" : undefined;
+  doc.innerHTML = render(state.text, state.path, { theme: forced });
+  const frames = [...doc.querySelectorAll("iframe")];
+  // Exporting needs every embed drawn, not only the ones on screen.
+  if (forced) for (const f of frames) f.loading = "eager";
+  embedsReady = whenLoaded(frames);
   await drawDiagrams(doc);
 }
 
@@ -377,6 +390,35 @@ async function toggleFocus() {
   await appWindow.setFullscreen(state.focus);
 }
 
+/** Prints the note in the light theme; the system dialog offers "Save as PDF". */
+async function exportPdf() {
+  if (!state.path) return;
+  await flush();
+  const previousMode = state.mode;
+  const previousTitle = document.title;
+  const root = document.documentElement;
+
+  root.dataset.theme = "light";
+  if (previousMode === "read") await renderDoc();
+  else await setMode("read");
+  await embedsReady;
+  await new Promise((r) => setTimeout(r, 400)); // let embeds draw their first frames
+
+  window.addEventListener(
+    "afterprint",
+    async () => {
+      delete root.dataset.theme;
+      document.title = previousTitle;
+      if (previousMode === "edit") await setMode("edit");
+      else await renderDoc();
+    },
+    { once: true },
+  );
+  // The browser suggests the document title as the PDF file name.
+  document.title = noteName(state.path);
+  window.print();
+}
+
 const hasVault = () => !!state.vault;
 const hasNote = () => !!state.path;
 
@@ -386,6 +428,7 @@ const actions: Action[] = [
   { group: "Note", key: "P", label: "Find or create a note", run: () => openSwitcher(), enabled: hasVault },
   { group: "Note", key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read"), enabled: hasNote },
   { group: "Note", key: "S", label: "Save now", run: flush, enabled: hasNote },
+  { group: "Note", key: "E", shift: true, label: "Export as PDF", run: exportPdf, enabled: hasNote },
   { group: "View", key: "B", label: "Show or hide the note list", run: toggleSidebar, enabled: hasVault },
   { group: "View", key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
   { group: "Folder", key: "O", label: "Open a folder of notes", run: pickVault },

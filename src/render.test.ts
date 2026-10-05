@@ -30,6 +30,11 @@ describe("render", () => {
     expect(render("::embed[http://example.com]", "n.md")).toContain("embed-error");
   });
 
+  it("tells local embeds the forced theme, but not external ones", () => {
+    expect(render("::embed[anim.html]", "n.md", { theme: "light" })).toContain('src="asset://vault/anim.html#quill-theme=light"');
+    expect(render("::embed[https://example.com/x]", "n.md", { theme: "light" })).toContain('src="https://example.com/x"');
+  });
+
   it("leaves mermaid blocks as placeholders", () => {
     expect(render("```mermaid\ngraph TD; A-->B\n```", "n.md")).toContain('class="mermaid" data-source="graph TD; A--&gt;B');
   });

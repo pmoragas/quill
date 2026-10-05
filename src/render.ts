@@ -8,6 +8,11 @@ import { dirname, joinInVault } from "./paths";
 const katexPlugin: typeof katexPluginModule =
   (katexPluginModule as unknown as { default?: typeof katexPluginModule }).default ?? katexPluginModule;
 
+export interface RenderOptions {
+  /** Theme to announce to local embeds, e.g. "light" when exporting. */
+  theme?: "light" | "dark";
+}
+
 /** Turns a vault-relative path into a URL the webview can load. */
 export type FileUrl = (vaultPath: string) => string;
 
@@ -69,7 +74,9 @@ export function createRenderer(fileUrl: FileUrl) {
       url = target;
     } else if (!isExternal(target)) {
       const resolved = joinInVault(noteDir(env), target);
-      url = resolved ? fileUrl(resolved) : null;
+      // Local embeds learn the theme Quill renders in (used when exporting), via the URL fragment.
+      const theme = (env as { theme?: string }).theme;
+      url = resolved ? fileUrl(resolved) + (theme ? `#quill-theme=${theme}` : "") : null;
     }
     if (!url) {
       return `<p class="embed-error">Cannot embed ${escapeAttr(target)}: use an https URL or a file inside the vault.</p>\n`;
@@ -80,7 +87,8 @@ export function createRenderer(fileUrl: FileUrl) {
     );
   };
 
-  return (source: string, notePath: string): string => md.render(source, { notePath });
+  return (source: string, notePath: string, options: RenderOptions = {}): string =>
+    md.render(source, { notePath, theme: options.theme });
 }
 
 /** Folder of the note being rendered; markdown-it passes it through as `env`. */
