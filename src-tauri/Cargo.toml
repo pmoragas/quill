@@ -1,6 +1,6 @@
 [package]
 name = "quill"
-version = "0.1.0"
+version = "0.1.1"
 description = "Minimalist notes with LaTeX-grade typography"
 authors = ["pmoragas"]
 edition = "2021"
