@@ -257,9 +257,74 @@ async function toggleFocus() {
   await appWindow.setFullscreen(state.focus);
 }
 
+// One list drives the keyboard shortcuts, the welcome screen and the actions modal.
+interface Action {
+  key: string;
+  shift?: boolean;
+  label: string;
+  run: () => unknown;
+}
+
+const actions: Action[] = [
+  { key: "O", label: "Open a folder of notes", run: pickVault },
+  { key: "P", label: "Find or create a note", run: () => state.vault && openSwitcher() },
+  { key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read") },
+  { key: "\\", label: "Show or hide the note list", run: () => document.body.classList.toggle("sidebar-open") },
+  { key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
+  { key: "S", label: "Save now", run: flush },
+];
+
+function shortcutLabel(action: Action) {
+  return `${isMac ? "⌘" : "Ctrl "}${action.shift ? "⇧ " : ""}${action.key}`;
+}
+
+function actionRow(action: Action, tag: "li" | "div", shortcutFirst = false) {
+  const row = document.createElement(tag);
+  const label = document.createElement("span");
+  label.textContent = action.label;
+  const kbd = document.createElement("kbd");
+  kbd.textContent = shortcutLabel(action);
+  if (shortcutFirst) row.append(kbd, label);
+  else row.append(label, kbd);
+  return row;
+}
+
+$("welcome-shortcuts").replaceChildren(...actions.map((a) => actionRow(a, "div", true)));
+
+const actionsModal = $("actions");
+const actionsList = actionsModal.querySelector("ul")!;
+actionsList.replaceChildren(
+  ...actions.map((action) => {
+    const row = actionRow(action, "li");
+    row.addEventListener("click", () => {
+      closeActions();
+      action.run();
+    });
+    return row;
+  }),
+);
+
+function openActions() {
+  actionsModal.hidden = false;
+}
+
+function closeActions() {
+  actionsModal.hidden = true;
+}
+
+$("actions-button").addEventListener("click", openActions);
+actionsModal.addEventListener("click", (event) => {
+  if (event.target === actionsModal) closeActions();
+});
+
 window.addEventListener(
   "keydown",
   (event) => {
+    if (event.key === "Escape" && !actionsModal.hidden) {
+      event.preventDefault();
+      closeActions();
+      return;
+    }
     if (event.key === "Escape" && state.focus && $("switcher").hidden) {
       event.preventDefault();
       toggleFocus();
@@ -267,19 +332,13 @@ window.addEventListener(
     }
     const mod = isMac ? event.metaKey : event.ctrlKey;
     if (!mod || event.altKey) return;
-    const key = event.key.toLowerCase();
-    const actions: Record<string, () => unknown> = {
-      o: pickVault,
-      p: () => state.vault && openSwitcher(),
-      e: () => setMode(state.mode === "read" ? "edit" : "read"),
-      s: flush,
-      "\\": () => document.body.classList.toggle("sidebar-open"),
-    };
-    const action = event.shiftKey ? (key === "f" ? toggleFocus : undefined) : actions[key];
+    const key = event.key.toUpperCase();
+    const action = actions.find((a) => a.key === key && !!a.shift === event.shiftKey);
     if (action) {
       event.preventDefault();
       event.stopPropagation();
-      action();
+      closeActions();
+      action.run();
     }
   },
   true,
@@ -287,10 +346,6 @@ window.addEventListener(
 
 // Hyphenation (which justified text needs) follows the system language.
 document.documentElement.lang = navigator.language || "en";
-
-for (const kbd of document.querySelectorAll("kbd[data-mod]")) {
-  kbd.textContent = `${isMac ? "⌘" : "Ctrl "}${kbd.textContent}`;
-}
 
 // Re-draw diagrams when the system theme changes.
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {

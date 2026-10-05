@@ -174,12 +174,13 @@ body.focus #scroller {
   text-align: left;
 }
 
-.shortcuts dt {
-  text-align: right;
+/* Each row is "shortcut  label" placed straight into the grid. */
+.shortcuts > div {
+  display: contents;
 }
 
-.shortcuts dd {
-  margin: 0;
+.shortcuts kbd {
+  text-align: right;
 }
 
 kbd {
@@ -467,6 +468,84 @@ kbd {
 #switcher li.create {
   color: var(--muted);
   font-style: italic;
+}
+
+/* ---------- actions button and modal ---------- */
+
+#actions-button {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 160ms ease;
+  z-index: 2;
+}
+
+#actions-button:hover,
+#actions-button:focus-visible {
+  opacity: 1;
+}
+
+body.focus #actions-button {
+  display: none;
+}
+
+#actions {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgb(0 0 0 / 0.12);
+  z-index: 3;
+}
+
+#actions[hidden] {
+  display: none;
+}
+
+#actions .dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+}
+
+#actions ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  font-size: 0.9rem;
+}
+
+#actions li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#actions li:hover {
+  background: var(--code-bg);
+}
+
+#actions kbd {
+  color: var(--muted);
 }
 
 /* ---------- toast ---------- */

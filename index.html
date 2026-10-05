@@ -14,13 +14,7 @@
         <h1>Quill</h1>
         <p id="welcome-text"></p>
         <p><button id="open-folder" type="button">Open folder…</button></p>
-        <dl class="shortcuts">
-          <dt><kbd data-mod>O</kbd></dt><dd>Open a folder of notes</dd>
-          <dt><kbd data-mod>P</kbd></dt><dd>Find or create a note</dd>
-          <dt><kbd data-mod>E</kbd></dt><dd>Switch between reading and writing</dd>
-          <dt><kbd data-mod>\</kbd></dt><dd>Show or hide the note list</dd>
-          <dt><kbd data-mod>⇧ F</kbd></dt><dd>Focus mode</dd>
-        </dl>
+        <div id="welcome-shortcuts" class="shortcuts"></div>
       </section>
       <article id="doc" class="page" hidden></article>
       <div id="editor" class="page" hidden></div>
@@ -29,6 +23,14 @@
     <div id="switcher" hidden>
       <input type="text" placeholder="Find or create a note…" spellcheck="false" autocomplete="off" />
       <ul></ul>
+    </div>
+
+    <button id="actions-button" type="button" aria-label="Actions and shortcuts" title="Actions and shortcuts">?</button>
+
+    <div id="actions" hidden>
+      <div class="dialog" role="dialog" aria-label="Actions">
+        <ul></ul>
+      </div>
     </div>
 
     <div id="toast" role="status" hidden></div>
