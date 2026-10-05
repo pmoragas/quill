@@ -25,7 +25,8 @@
 }
 
 /* Forced light theme, used while exporting so paper never gets the dark palette. */
-:root[data-theme="light"] {
+:root[data-theme="light"],
+.force-light {
   --bg: #fdfcf9;
   --fg: #1c1b19;
   --muted: #8b877f;
@@ -256,21 +257,21 @@ kbd {
 
 /* ---------- rendered note: LaTeX article look ---------- */
 
-#doc {
+.doc {
   hyphens: auto;
 }
 
-#doc p,
-#doc li {
+.doc p,
+.doc li {
   text-align: justify;
 }
 
-#doc p {
+.doc p {
   margin: 0 0 0.9em;
 }
 
 /* The first heading is the document title, set like \maketitle. */
-#doc > h1:first-child {
+.doc > h1:first-child {
   text-align: center;
   font-size: 1.75em;
   font-weight: normal;
@@ -278,10 +279,10 @@ kbd {
   line-height: 1.25;
 }
 
-#doc h1,
-#doc h2,
-#doc h3,
-#doc h4 {
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4 {
   font-weight: bold;
   line-height: 1.3;
   margin: 1.8em 0 0.6em;
@@ -289,66 +290,66 @@ kbd {
   hyphens: manual;
 }
 
-#doc h1 {
+.doc h1 {
   font-size: 1.45em;
 }
 
-#doc h2 {
+.doc h2 {
   font-size: 1.2em;
 }
 
-#doc h3 {
+.doc h3 {
   font-size: 1.05em;
 }
 
-#doc h4 {
+.doc h4 {
   font-size: 1em;
   font-style: italic;
   font-weight: normal;
 }
 
-#doc a {
+.doc a {
   color: var(--accent);
   text-decoration: none;
 }
 
-#doc a:hover {
+.doc a:hover {
   text-decoration: underline;
 }
 
-#doc ul,
-#doc ol {
+.doc ul,
+.doc ol {
   padding-left: 1.6em;
   margin: 0 0 0.9em;
 }
 
-#doc li + li {
+.doc li + li {
   margin-top: 0.2em;
 }
 
-#doc blockquote {
+.doc blockquote {
   margin: 1.2em 2em;
   font-size: 0.95em;
   color: color-mix(in srgb, var(--fg) 85%, var(--bg));
 }
 
-#doc hr {
+.doc hr {
   border: 0;
   text-align: center;
   margin: 2em 0;
 }
 
-#doc hr::before {
+.doc hr::before {
   content: "⁂";
   color: var(--muted);
 }
 
-#doc code {
+.doc code {
   font-family: var(--mono);
   font-size: 0.92em;
 }
 
-#doc pre {
+.doc pre {
   font-family: var(--mono);
   font-size: 0.8em;
   line-height: 1.5;
@@ -361,12 +362,12 @@ kbd {
   hyphens: none;
 }
 
-#doc pre code {
+.doc pre code {
   font-size: inherit;
 }
 
 /* Tables in the booktabs style: rules above, below and under the header only. */
-#doc table {
+.doc table {
   border-collapse: collapse;
   margin: 1.4em auto;
   border-top: 1.5px solid var(--fg);
@@ -374,56 +375,56 @@ kbd {
   font-size: 0.95em;
 }
 
-#doc th {
+.doc th {
   border-bottom: 1px solid var(--fg);
   font-weight: bold;
 }
 
-#doc th,
-#doc td {
+.doc th,
+.doc td {
   padding: 0.45em 0.9em;
   text-align: left;
 }
 
-#doc img {
+.doc img {
   display: block;
   max-width: 100%;
   margin: 1.4em auto;
 }
 
 /* Math */
-#doc .katex {
+.doc .katex {
   font-size: 1.05em;
 }
 
-#doc .katex-display,
-#doc .katex-block {
+.doc .katex-display,
+.doc .katex-block {
   margin: 1.1em 0;
   overflow-x: auto;
   overflow-y: hidden;
   text-align: center;
 }
 
-#doc .katex-error {
+.doc .katex-error {
   color: #c0392b;
   font-family: var(--mono);
   font-size: 0.85em;
 }
 
 /* Diagrams and embeds sit as figures. */
-#doc .mermaid {
+.doc .mermaid {
   display: flex;
   justify-content: center;
   margin: 1.6em 0;
 }
 
-#doc .mermaid svg {
+.doc .mermaid svg {
   max-width: 100%;
   height: auto;
 }
 
-#doc .diagram-error,
-#doc .embed-error {
+.doc .diagram-error,
+.doc .embed-error {
   font-family: var(--mono);
   font-size: 0.8em;
   color: #c0392b;
@@ -431,11 +432,11 @@ kbd {
   text-align: left;
 }
 
-#doc .embed {
+.doc .embed {
   margin: 1.6em 0;
 }
 
-#doc .embed iframe {
+.doc .embed iframe {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
@@ -845,20 +846,49 @@ body.focus:not(.save-error) #pill {
   z-index: 4;
 }
 
-/* ---------- export (print to PDF) ---------- */
+/* ---------- paged layout (print and the export preview) ---------- */
 
-@page {
-  size: A4;
+/* Break rules only act where content is split into pages or columns, so they are safe globally. */
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4 {
+  break-after: avoid;
 }
 
-/* Page margins and numbers live in print-page.css, applied on Chromium only (see main.ts). */
+.doc table,
+.doc img,
+.doc figure,
+.doc blockquote,
+.doc .katex-display,
+.doc .mermaid {
+  break-inside: avoid;
+}
+
+.doc p,
+.doc li {
+  orphans: 3;
+  widows: 3;
+}
+
+.doc .embed-link {
+  font-size: 0.9em;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---------- export (print to PDF) ---------- */
+
+/* The @page rule is set by main.ts from the export options (see export-panel.ts). */
 
 @media print {
   html,
   body {
     height: auto;
     overflow: visible;
-    background: #fff;
+    background: var(--bg);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   body {
@@ -879,6 +909,8 @@ body.focus:not(.save-error) #pill {
   #drag-strip,
   #palette,
   #switcher,
+  #folders,
+  #export,
   #toast,
   #welcome,
   #editor {
@@ -890,44 +922,360 @@ body.focus:not(.save-error) #pill {
     padding: 0;
   }
 
-  /* WebKit takes its page margins from the print dialog: add side margins for a readable measure. */
-  html:not(.chromium) .page {
+  /* WebKit's print dialog sets its own (narrow) margins: pad the sides for a readable measure. */
+  html.dialog-print .page {
     padding: 0 14mm;
   }
 
-  #doc h1,
-  #doc h2,
-  #doc h3,
-  #doc h4 {
-    break-after: avoid;
-  }
-
-  #doc table,
-  #doc img,
-  #doc figure,
-  #doc blockquote,
-  #doc .katex-display,
-  #doc .mermaid {
-    break-inside: avoid;
-  }
-
-  #doc p,
-  #doc li {
-    orphans: 3;
-    widows: 3;
-  }
-
   /* Paper cannot scroll: wrap long code lines instead of cutting them. */
-  #doc pre {
+  .doc pre {
     white-space: pre-wrap;
     overflow: visible;
   }
 
   /* Paper cannot be clicked: print where external links go. */
-  #doc a[href^="http"]::after {
+  .doc a[href^="http"]::after {
     content: " (" attr(href) ")";
     font-size: 0.85em;
     color: var(--muted);
     word-break: break-all;
+  }
+}
+
+/* ---------- open folder panel ---------- */
+
+#folders,
+#export {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 9vh;
+  background: rgb(0 0 0 / 0.12);
+  z-index: 5;
+}
+
+#folders[hidden],
+#export[hidden] {
+  display: none;
+}
+
+#folders .dialog,
+#export .dialog {
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+  overflow: hidden;
+}
+
+#folders .dialog {
+  width: min(32rem, calc(100vw - 2rem));
+}
+
+#folders .path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#folders .path span {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+#folders .path input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+#folders ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px 6px 8px;
+  max-height: calc(82vh - 110px);
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+#folders li.group {
+  padding: 10px 10px 3px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#folders li.message {
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+#folders li.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#folders li.row.selected {
+  background: var(--code-bg);
+}
+
+#folders .meta {
+  color: var(--muted);
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#folders .footer {
+  display: flex;
+  gap: 14px;
+  padding: 7px 14px;
+  border-top: 1px solid var(--rule);
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#folders .footer .target {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#folders .footer .end {
+  margin-left: auto;
+}
+
+/* ---------- export panel ---------- */
+
+#export .dialog {
+  width: min(47rem, calc(100vw - 2rem));
+}
+
+#export header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#export .title {
+  font-size: 17px;
+}
+
+#export .hint {
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#export .body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+}
+
+#export .preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px;
+  background: var(--panel);
+  border-right: 1px solid var(--rule);
+}
+
+#export .stage {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+  border: 1px solid var(--rule);
+}
+
+/* A page at real size (96 px per inch), scaled down to fit the stage. */
+#export .sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  transform-origin: top left;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+#export .window {
+  overflow: hidden;
+}
+
+/* The note flows into page-sized columns; each column is one page. */
+#export .flow {
+  column-fill: auto;
+  font-size: 11pt;
+  line-height: 1.5;
+  hyphens: auto;
+}
+
+#export .flow > h1:first-child {
+  margin-top: 0;
+}
+
+#export .flow pre {
+  white-space: pre-wrap;
+}
+
+#export .flow a[href^="http"]::after {
+  content: " (" attr(href) ")";
+  font-size: 0.85em;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+#export .pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#export .pager button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+#export .settings {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 24px;
+  font-size: 14px;
+}
+
+#export .label {
+  margin-bottom: 6px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#export .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#export .chips button {
+  padding: 3px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#export .chips button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#export .check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 7px;
+  cursor: pointer;
+}
+
+#export .check input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+#export .check:has(input:disabled) {
+  color: var(--muted);
+  cursor: default;
+}
+
+#export .actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+#export .where {
+  flex: 1;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#export .print,
+#export .save {
+  padding: 5px 16px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#export .print {
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--fg);
+}
+
+#export .save {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+#export .save:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Exported paper is white; the warm tint is for the screen. */
+#export .sheet.force-light {
+  background: #fff;
+}
+
+@media print {
+  html[data-theme="light"],
+  html[data-theme="light"] body {
+    background: #fff;
   }
 }

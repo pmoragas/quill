@@ -2,14 +2,14 @@
 let mermaidModule: Promise<typeof import("mermaid").default> | null = null;
 let counter = 0;
 
-export async function drawDiagrams(root: HTMLElement): Promise<void> {
+export async function drawDiagrams(root: HTMLElement, options: { light?: boolean } = {}): Promise<void> {
   const blocks = root.querySelectorAll<HTMLElement>("div.mermaid[data-source]");
   if (blocks.length === 0) return;
 
   mermaidModule ??= import("mermaid").then((m) => m.default);
   const mermaid = await mermaidModule;
   // Exporting forces the light theme (data-theme="light") whatever the system uses.
-  const forcedLight = document.documentElement.dataset.theme === "light";
+  const forcedLight = options.light || document.documentElement.dataset.theme === "light";
   const dark = !forcedLight && matchMedia("(prefers-color-scheme: dark)").matches;
   mermaid.initialize({
     startOnLoad: false,

@@ -41,10 +41,10 @@ Exported PDFs always use the light theme. Your own HTML embeds can follow it: wh
 | `Ctrl+P` | Find or create a note |
 | `Ctrl+E` | Switch between reading and writing |
 | `Ctrl+S` | Save now (it also autosaves) |
-| `Ctrl+Shift+E` | Export as PDF (choose "Save as PDF" in the print dialog) |
+| `Ctrl+Shift+E` | Export: page preview, paper and margins, Save PDF or Print… |
 | `Ctrl+B` | Show or hide the note list |
 | `Ctrl+Shift+F` | Focus mode (`Esc` to leave) |
-| `Ctrl+O` | Open a folder of notes |
+| `Ctrl+O` | Open a folder (press again for the system browser) |
 | `Ctrl+H` | Back to the start screen |
 
 Move the pointer to the top edge of the window to show the bar with the note list, Read/Write toggle, save state and all actions.

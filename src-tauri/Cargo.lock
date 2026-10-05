@@ -2673,12 +2673,17 @@ dependencies = [
 name = "quill"
 version = "0.1.2"
 dependencies = [
+ "gtk",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tokio",
+ "webkit2gtk",
+ "webview2-com",
+ "windows",
 ]
 
 [[package]]

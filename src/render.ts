@@ -11,6 +11,8 @@ const katexPlugin: typeof katexPluginModule =
 export interface RenderOptions {
   /** Theme to announce to local embeds, e.g. "light" when exporting. */
   theme?: "light" | "dark";
+  /** Replace embeds with a line naming them, for paper. */
+  embedsAsLinks?: boolean;
 }
 
 /** Turns a vault-relative path into a URL the webview can load. */
@@ -69,6 +71,12 @@ export function createRenderer(fileUrl: FileUrl) {
 
   md.renderer.rules.embed = (tokens, idx, _options, env) => {
     const target = tokens[idx].content;
+    if ((env as { embedsAsLinks?: boolean }).embedsAsLinks) {
+      const label = /^https:\/\//i.test(target)
+        ? `<a href="${escapeAttr(target)}">${escapeAttr(target)}</a>`
+        : `<code>${escapeAttr(target)}</code> (open the note in Quill)`;
+      return `<p class="embed-link">Interactive figure: ${label}</p>\n`;
+    }
     let url: string | null = null;
     if (/^https:\/\//i.test(target)) {
       url = target;
@@ -88,7 +96,7 @@ export function createRenderer(fileUrl: FileUrl) {
   };
 
   return (source: string, notePath: string, options: RenderOptions = {}): string =>
-    md.render(source, { notePath, theme: options.theme });
+    md.render(source, { notePath, theme: options.theme, embedsAsLinks: options.embedsAsLinks });
 }
 
 /** Folder of the note being rendered; markdown-it passes it through as `env`. */

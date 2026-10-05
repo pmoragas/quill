@@ -2,7 +2,6 @@ import "computer-modern/cmu-serif.css";
 import "computer-modern/cmu-typewriter-text.css";
 import "katex/dist/katex.min.css";
 import "./styles.css";
-import printPageCss from "./print-page.css?inline";
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -10,6 +9,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { createEditor } from "./editor";
+import { DEFAULT_OPTIONS, MARGIN_MM, pageCss, setupExportPanel, type ExportOptions } from "./export-panel";
+import { setupFolderPicker } from "./folder-picker";
 import { drawDiagrams } from "./mermaid";
 import { setupPalette, type Action } from "./palette";
 import { basename, dirname, joinInVault, relativeTo } from "./paths";
@@ -189,13 +190,16 @@ function whenLoaded(frames: HTMLIFrameElement[], timeoutMs = 3000): Promise<void
   return Promise.race([Promise.all(loads).then(() => undefined), new Promise<void>((r) => setTimeout(r, timeoutMs))]);
 }
 
+/** Options of the export in progress; the note renders for paper while it is set. */
+let exporting: ExportOptions | null = null;
+
 async function renderDoc() {
   if (!state.path) return;
-  const forced = document.documentElement.dataset.theme === "light" ? "light" : undefined;
-  doc.innerHTML = render(state.text, state.path, { theme: forced });
+  const light = exporting?.light ? "light" : undefined;
+  doc.innerHTML = render(state.text, state.path, { theme: light, embedsAsLinks: exporting?.embedsAsLinks });
   const frames = [...doc.querySelectorAll("iframe")];
   // Exporting needs every embed drawn, not only the ones on screen.
-  if (forced) for (const f of frames) f.loading = "eager";
+  if (exporting) for (const f of frames) f.loading = "eager";
   embedsReady = whenLoaded(frames);
   await drawDiagrams(doc);
 }
@@ -355,12 +359,22 @@ async function openVault(path: string) {
   return true;
 }
 
+/** The system folder browser, for network drives and unusual places. */
 async function pickVault() {
   const folder = await open({ directory: true, title: "Open a folder of notes" });
   if (typeof folder === "string") await openVault(folder);
 }
 
-$("open-folder").addEventListener("click", pickVault);
+const parentOf = (path: string) => path.slice(0, Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
+
+const folderPicker = setupFolderPicker($("folders"), {
+  open: (path) => openVault(path),
+  browse: pickVault,
+  recent: () => recentFolders().filter((p) => p !== state.vault),
+  start: async () => (state.vault ? parentOf(state.vault) : await invoke<string | null>("default_folder")),
+});
+$("folders-hint").textContent = `${isMac ? "⌘" : "Ctrl"} O again: system browser…`;
+$("open-folder").addEventListener("click", () => folderPicker.open());
 
 // ---------- links in the rendered note ----------
 
@@ -391,29 +405,69 @@ async function toggleFocus() {
   await appWindow.setFullscreen(state.focus);
 }
 
-const RESTORE_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
+// ---------- export ----------
 
-/** Prints the note in the light theme; the system dialog offers "Save as PDF". */
-async function exportPdf() {
-  if (!state.path) return;
+const isChromium = /Chrome\//.test(navigator.userAgent);
+const root = document.documentElement;
+if (isChromium) root.classList.add("chromium");
+const pageStyle = document.createElement("style");
+pageStyle.textContent = pageCss(DEFAULT_OPTIONS, isChromium);
+document.head.append(pageStyle);
+let modeBeforeExport: Mode = "read";
+
+/** Renders the note for paper: page rule, theme, embeds loaded. */
+async function prepareExport(o: ExportOptions) {
   await flush();
-  const previousMode = state.mode;
-  const previousTitle = document.title;
-  const root = document.documentElement;
-
-  root.dataset.theme = "light";
-  if (previousMode === "read") await renderDoc();
+  exporting = o;
+  modeBeforeExport = state.mode;
+  pageStyle.textContent = pageCss(o, isChromium);
+  if (o.light) root.dataset.theme = "light";
+  if (state.mode === "read") await renderDoc();
   else await setMode("read");
   await embedsReady;
   await new Promise((r) => setTimeout(r, 400)); // let embeds draw their first frames
+}
 
+async function finishExport() {
+  exporting = null;
+  delete root.dataset.theme;
+  root.classList.remove("dialog-print");
+  if (modeBeforeExport === "edit") await setMode("edit");
+  else await renderDoc();
+}
+
+/** Writes "<note>.pdf" next to the note without a dialog (system dialog on macOS). */
+async function savePdf(o: ExportOptions) {
+  if (!state.path) return;
+  await prepareExport(o);
+  try {
+    const out = await invoke<string>("export_pdf", {
+      path: state.path,
+      options: { paper: o.paper, landscape: o.landscape, marginMm: MARGIN_MM[o.margins] },
+    });
+    await finishExport();
+    notify(`Saved ${out}`);
+  } catch (error) {
+    await finishExport();
+    if (String(error) === "unsupported") printWithDialog(o);
+    else notify(`Could not export: ${error}`);
+  }
+}
+
+const RESTORE_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
+
+/** Hands the page to the system print dialog, for paper printers. */
+async function printWithDialog(o: ExportOptions) {
+  if (!state.path) return;
+  await prepareExport(o);
+  // WebKit takes its margins from the dialog; pad the sides for a readable measure.
+  if (!isChromium) root.classList.add("dialog-print");
+  const previousTitle = document.title;
   // Restore on the next deliberate input, not on "afterprint": WebKit fires that before it has
   // finished drawing the pages, and re-rendering mid-print corrupts them.
-  const restore = async () => {
+  const restore = () => {
     for (const type of RESTORE_EVENTS) window.removeEventListener(type, restore, true);
-    delete root.dataset.theme;
-    if (previousMode === "edit") await setMode("edit");
-    else await renderDoc();
+    finishExport();
   };
   window.addEventListener(
     "afterprint",
@@ -428,6 +482,40 @@ async function exportPdf() {
   window.print();
 }
 
+function exportTarget(): string {
+  if (!state.vault || !state.path) return "";
+  const sep = state.vault.includes("\\") ? "\\" : "/";
+  const full = [state.vault, ...state.path.replace(/\.md$/, ".pdf").split("/")].join(sep);
+  return full.split(/[\\/]/).slice(-3).join(sep);
+}
+
+const exportPanel = setupExportPanel($("export"), {
+  title: () => (state.path ? noteName(state.path) : ""),
+  target: exportTarget,
+  async renderPreview(flow, o) {
+    if (!state.path) return;
+    flow.innerHTML = render(state.text, state.path, { theme: o.light ? "light" : undefined, embedsAsLinks: o.embedsAsLinks });
+    await drawDiagrams(flow, { light: o.light });
+  },
+  savePdf,
+  print: printWithDialog,
+  chromium: isChromium,
+  load: () => {
+    try {
+      return { ...DEFAULT_OPTIONS, ...JSON.parse(remember.get("exportOptions") ?? "{}") };
+    } catch {
+      return DEFAULT_OPTIONS;
+    }
+  },
+  store: (o) => remember.set("exportOptions", JSON.stringify(o)),
+});
+
+async function openExport() {
+  if (!state.path) return;
+  await flush();
+  exportPanel.open();
+}
+
 const hasVault = () => !!state.vault;
 const hasNote = () => !!state.path;
 
@@ -437,10 +525,10 @@ const actions: Action[] = [
   { group: "Note", key: "P", label: "Find or create a note", run: () => openSwitcher(), enabled: hasVault },
   { group: "Note", key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read"), enabled: hasNote },
   { group: "Note", key: "S", label: "Save now", run: flush, enabled: hasNote },
-  { group: "Note", key: "E", shift: true, label: "Export as PDF", run: exportPdf, enabled: hasNote },
+  { group: "Note", key: "E", shift: true, label: "Export as PDF", run: openExport, enabled: hasNote },
   { group: "View", key: "B", label: "Show or hide the note list", run: toggleSidebar, enabled: hasVault },
   { group: "View", key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
-  { group: "Folder", key: "O", label: "Open a folder of notes", run: pickVault },
+  { group: "Folder", key: "O", label: "Open a folder of notes", run: () => folderPicker.open() },
   { group: "Folder", key: "H", label: "Back to start screen", run: goHome, enabled: hasNote },
 ];
 
@@ -468,7 +556,8 @@ $("welcome-shortcuts").replaceChildren(
 window.addEventListener(
   "keydown",
   (event) => {
-    if (event.key === "Escape" && state.focus && !palette.isOpen() && $("switcher").hidden) {
+    const panelOpen = palette.isOpen() || folderPicker.isOpen() || exportPanel.isOpen() || !$("switcher").hidden;
+    if (event.key === "Escape" && state.focus && !panelOpen) {
       event.preventDefault();
       toggleFocus();
       return;
@@ -484,11 +573,20 @@ window.addEventListener(
       else palette.open();
       return;
     }
+    // Ctrl+O inside the folder panel hands over to the system browser.
+    if (key === "O" && !event.shiftKey && folderPicker.isOpen()) {
+      event.preventDefault();
+      event.stopPropagation();
+      folderPicker.browse();
+      return;
+    }
     const action = actions.find((a) => a.key === key && !!a.shift === event.shiftKey);
     if (!action) return;
     event.preventDefault();
     event.stopPropagation();
     palette.close();
+    folderPicker.close();
+    exportPanel.close();
     if (action.enabled?.() === false) {
       notify(hasVault() ? "Open a note first." : `Open a folder first (${isMac ? "⌘" : "Ctrl+"}O).`);
       return;
@@ -497,14 +595,6 @@ window.addEventListener(
   },
   true,
 );
-
-// Chromium (Windows) gets CSS page margins and numbers; WebKit would clip pages with them.
-if (/Chrome\//.test(navigator.userAgent)) {
-  document.documentElement.classList.add("chromium");
-  const style = document.createElement("style");
-  style.textContent = printPageCss;
-  document.head.append(style);
-}
 
 // Hyphenation (which justified text needs) follows the system language.
 document.documentElement.lang = navigator.language || "en";

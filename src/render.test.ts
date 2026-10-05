@@ -30,6 +30,12 @@ describe("render", () => {
     expect(render("::embed[http://example.com]", "n.md")).toContain("embed-error");
   });
 
+  it("can replace embeds with a line naming them", () => {
+    const html = render("::embed[anim.html]", "n.md", { embedsAsLinks: true });
+    expect(html).toContain("Interactive figure: <code>anim.html</code>");
+    expect(html).not.toContain("<iframe");
+  });
+
   it("tells local embeds the forced theme, but not external ones", () => {
     expect(render("::embed[anim.html]", "n.md", { theme: "light" })).toContain('src="asset://vault/anim.html#quill-theme=light"');
     expect(render("::embed[https://example.com/x]", "n.md", { theme: "light" })).toContain('src="https://example.com/x"');

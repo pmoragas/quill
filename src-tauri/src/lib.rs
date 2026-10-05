@@ -1,3 +1,6 @@
+mod folders;
+mod pdf;
+
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
@@ -160,6 +163,21 @@ fn save_asset(vault: State<Vault>, request: Request) -> Result<String, String> {
     Ok(format!("{ASSETS_DIR}/{}", file.file_name().unwrap().to_string_lossy()))
 }
 
+/// Saves the current note as a PDF next to it (same name, `.pdf`) and returns the full path.
+#[tauri::command]
+async fn export_pdf(
+    webview: tauri::Webview,
+    vault: State<'_, Vault>,
+    path: String,
+    options: pdf::PdfOptions,
+) -> Result<String, String> {
+    let out = resolve_note(&vault_root(&vault)?, &path)?.with_extension("pdf");
+    let (done, finished) = tokio::sync::oneshot::channel();
+    pdf::print_to_file(&webview, out.clone(), &options, done)?;
+    finished.await.map_err(|_| "the export was interrupted".to_string())??;
+    Ok(out.to_string_lossy().into_owned())
+}
+
 fn percent_decode(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -194,7 +212,15 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            open_vault, vault_path, list_notes, read_note, write_note, save_asset
+            open_vault,
+            vault_path,
+            list_notes,
+            read_note,
+            write_note,
+            save_asset,
+            export_pdf,
+            folders::list_folder,
+            folders::default_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

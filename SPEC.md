@@ -77,11 +77,19 @@ Shortcuts never use Alt, because AltGr arrives as Ctrl+Alt on Windows (needed fo
 - Save state: "Saving…", "Saved" (fades after 2 s), or "Couldn't save · Retry" (stays until resolved).
 - The start screen lists up to five recent folders.
 
+### Open folder
+
+- `Ctrl/Cmd+O` opens an in-app panel in the switcher's style: a path field (type or paste), the subfolders of that path with their note counts, and recent folders.
+- ↑↓ choose, → enter a folder, ← go up, ↵ open. After navigating nothing is selected, so ↵ opens the current folder; the footer says what ↵ will open.
+- `Ctrl/Cmd+O` again hands over to the system folder browser (network drives, unusual places).
+
 ### Export
 
-- "Export as PDF" opens the system print dialog ("Save as PDF") with a print stylesheet: A4, page numbers, no app chrome, headings kept with their content, figures and tables not split, long code wrapped, external link addresses printed.
-- Export always renders in the light theme. Diagrams are redrawn light; local embeds load eagerly and receive `#quill-theme=light` in their URL so they can switch palette (embeds that ignore it print as they are).
-- The PDF file name defaults to the note title.
+- `Ctrl/Cmd+Shift+E` opens the export panel: a live page preview (‹ › to page through), paper (A4, Letter, portrait, landscape), margins (narrow 12 mm, normal 22 mm, wide 32 mm), and options: page numbers, always light theme, include embeds as a link. Choices are remembered.
+- **Save PDF** writes `<note>.pdf` next to the note without a dialog, using the webview's own engine: WebView2 `PrintToPdf` on Windows, WebKitGTK print-to-file on Linux. macOS falls back to the system dialog.
+- **Print…** hands over to the system print dialog, for paper printers.
+- WebKit clips content when CSS `@page` margins are set, so on WebKit margins come from the print settings and CSS only sets the paper size. Page numbers need Chromium (Windows).
+- Export renders light by default: diagrams are redrawn light; local embeds load eagerly and receive `#quill-theme=light` in their URL so they can switch palette (embeds that ignore it print as they are).
 
 ## Security
 

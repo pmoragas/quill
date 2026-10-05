@@ -46,7 +46,7 @@
         </div>
         <div id="welcome-shortcuts" class="shortcuts"></div>
       </section>
-      <article id="doc" class="page" hidden></article>
+      <article id="doc" class="page doc" hidden></article>
       <div id="editor" class="page" hidden></div>
     </main>
 
@@ -60,6 +60,63 @@
         <input type="text" placeholder="Search actions…" spellcheck="false" autocomplete="off" />
         <ul></ul>
         <div class="footer"><span>↑↓ choose</span><span>↵ run</span><span>Esc close</span><span class="end" id="palette-hint"></span></div>
+      </div>
+    </div>
+
+    <div id="folders" hidden>
+      <div class="dialog" role="dialog" aria-label="Open folder">
+        <label class="path"><span>Open folder</span><input type="text" spellcheck="false" autocomplete="off" /></label>
+        <ul></ul>
+        <div class="footer">
+          <span>↑↓ choose</span><span>→ enter</span><span>← up</span><span class="target"></span>
+          <span class="end" id="folders-hint"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="export" hidden>
+      <div class="dialog" role="dialog" aria-label="Export">
+        <header><span class="title"></span><span class="hint">Esc close</span></header>
+        <div class="body">
+          <div class="preview">
+            <div class="stage"><div class="sheet"><div class="window"><div class="flow doc"></div></div></div></div>
+            <div class="pager">
+              <button type="button" class="prev" aria-label="Previous page">‹</button>
+              <span class="page-label"></span>
+              <button type="button" class="next" aria-label="Next page">›</button>
+            </div>
+          </div>
+          <div class="settings">
+            <div>
+              <div class="label">Paper</div>
+              <div class="chips">
+                <button type="button" data-set="paper=a4">A4</button>
+                <button type="button" data-set="paper=letter">Letter</button>
+                <button type="button" data-set="landscape=false">Portrait</button>
+                <button type="button" data-set="landscape=true">Landscape</button>
+              </div>
+            </div>
+            <div>
+              <div class="label">Margins</div>
+              <div class="chips">
+                <button type="button" data-set="margins=narrow">Narrow</button>
+                <button type="button" data-set="margins=normal">Normal</button>
+                <button type="button" data-set="margins=wide">Wide</button>
+              </div>
+            </div>
+            <div>
+              <div class="label">Options</div>
+              <label class="check"><input type="checkbox" data-option="pageNumbers" />Page numbers</label>
+              <label class="check"><input type="checkbox" data-option="light" />Always light theme</label>
+              <label class="check"><input type="checkbox" data-option="embedsAsLinks" />Include embeds as a link</label>
+            </div>
+            <div class="actions">
+              <span class="where"></span>
+              <button type="button" class="print">Print…</button>
+              <button type="button" class="save">Save PDF</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
