@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" width="480" height="220" font-family="serif" font-size="14">
+  <rect width="480" height="220" fill="#fdfcf9"/>
+  <line x1="40" y1="110" x2="460" y2="110" stroke="#8b877f"/>
+  <line x1="60" y1="20" x2="60" y2="200" stroke="#8b877f"/>
+  <path d="M60 110 C 110 20, 160 20, 210 110 S 310 200, 360 110 S 430 50, 460 80" fill="none" stroke="#2b4c8c" stroke-width="2.5"/>
+  <text x="440" y="130" fill="#1c1b19">t</text>
+  <text x="68" y="30" fill="#1c1b19">f(t)</text>
+  <text x="240" y="212" text-anchor="middle" fill="#8b877f">Figure 1. A signal over time.</text>
+</svg>

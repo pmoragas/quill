@@ -1,4 +1,5 @@
 import MarkdownIt from "markdown-it";
+import katex from "katex";
 import katexPluginModule from "@vscode/markdown-it-katex";
 import { dirname, joinInVault } from "./paths";
 
@@ -22,7 +23,10 @@ function isExternal(src: string): boolean {
 
 export function createRenderer(fileUrl: FileUrl) {
   const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
-  md.use(katexPlugin, { throwOnError: false });
+  // Pass our KaTeX so the HTML matches the version of the bundled stylesheet;
+  // the plugin otherwise uses its own, older copy (hence the type cast).
+  type PluginKatex = NonNullable<Parameters<typeof katexPlugin>[1]>["katex"];
+  md.use(katexPlugin, { throwOnError: false, katex: katex as unknown as PluginKatex });
 
   // `::embed[path-or-url]` on its own line becomes a sandboxed iframe.
   md.block.ruler.before("paragraph", "embed", (state, startLine, _endLine, silent) => {

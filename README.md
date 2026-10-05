@@ -46,10 +46,16 @@ Requires Node.js, Rust and the [Tauri prerequisites](https://v2.tauri.app/start/
 
 ```sh
 npm install
-npm run tauri dev     # run the app
+npm run tauri dev     # run the app with hot reload
 npm test              # frontend tests
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
+
+### Checking how it looks and feels
+
+Keep `npm run tauri dev` running while you work: frontend changes appear in the open window within a second, and Rust changes rebuild in a few seconds.
+
+Open the `demo/` folder in the app (`Ctrl+O`). Its notes cover every feature: typography, math, diagrams, images and embeds. Walk through them after each change. Revert any edits made while testing with `git checkout demo/`.
 
 ## Releases
 

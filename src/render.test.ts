@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import katex from "katex";
 import { createRenderer } from "./render";
 import { joinInVault, relativeTo } from "./paths";
 
@@ -9,6 +10,10 @@ describe("render", () => {
     const html = render("Euler: $e^{i\\pi}+1=0$\n\n$$\\int_0^1 x\\,dx$$", "n.md");
     expect(html).toContain('class="katex"');
     expect(html).toContain("katex-display");
+  });
+
+  it("renders math with the same KaTeX version as the stylesheet", () => {
+    expect(render("$x_0^2$", "n.md")).toContain(katex.renderToString("x_0^2"));
   });
 
   it("resolves images relative to the note", () => {
