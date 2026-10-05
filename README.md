@@ -36,6 +36,7 @@ Paste or drop an image into the editor to save it into `assets/` and insert the 
 |---|---|
 | `Ctrl+O` | Open a folder of notes |
 | `Ctrl+P` | Find or create a note |
+| `Ctrl+H` | Back to the start screen |
 | `Ctrl+E` | Switch between reading and writing |
 | `Ctrl+\` | Show or hide the note list |
 | `Ctrl+Shift+F` | Focus mode (`Esc` to leave) |

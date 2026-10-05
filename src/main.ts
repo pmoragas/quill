@@ -188,6 +188,18 @@ async function openNote(path: string, mode: Mode = "read") {
   scroller.scrollTop = 0;
 }
 
+/** Saves and closes the current note, returning to the start screen. */
+async function goHome() {
+  await flush();
+  state.path = null;
+  state.mode = "read";
+  remember.set("lastNote", "");
+  drawNoteList();
+  await appWindow.setTitle("Quill");
+  showWelcome();
+  scroller.scrollTop = 0;
+}
+
 async function createNote(path: string) {
   const title = basename(path).replace(/\.md$/, "");
   try {
@@ -268,6 +280,7 @@ interface Action {
 const actions: Action[] = [
   { key: "O", label: "Open a folder of notes", run: pickVault },
   { key: "P", label: "Find or create a note", run: () => state.vault && openSwitcher() },
+  { key: "H", label: "Back to start screen", run: goHome },
   { key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read") },
   { key: "\\", label: "Show or hide the note list", run: () => document.body.classList.toggle("sidebar-open") },
   { key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },

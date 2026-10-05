@@ -59,6 +59,7 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 |---|---|
 | `Ctrl/Cmd+O` | Open a vault folder |
 | `Ctrl/Cmd+P` | Find or create a note |
+| `Ctrl/Cmd+H` | Back to the start screen |
 | `Ctrl/Cmd+E` | Toggle reading / writing |
 | `Ctrl/Cmd+\` | Toggle the note list |
 | `Ctrl/Cmd+Shift+F` | Focus mode |
