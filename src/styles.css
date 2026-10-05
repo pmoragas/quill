@@ -849,15 +849,9 @@ body.focus:not(.save-error) #pill {
 
 @page {
   size: A4;
-  margin: 22mm 25mm 24mm;
-
-  @bottom-center {
-    content: counter(page) " / " counter(pages);
-    font-family: "CMU Serif", serif;
-    font-size: 9pt;
-    color: #8b877f;
-  }
 }
+
+/* Page margins and numbers live in print-page.css, applied on Chromium only (see main.ts). */
 
 @media print {
   html,
@@ -894,6 +888,11 @@ body.focus:not(.save-error) #pill {
   .page {
     max-width: none;
     padding: 0;
+  }
+
+  /* WebKit takes its page margins from the print dialog: add side margins for a readable measure. */
+  html:not(.chromium) .page {
+    padding: 0 14mm;
   }
 
   #doc h1,

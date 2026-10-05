@@ -2,6 +2,7 @@ import "computer-modern/cmu-serif.css";
 import "computer-modern/cmu-typewriter-text.css";
 import "katex/dist/katex.min.css";
 import "./styles.css";
+import printPageCss from "./print-page.css?inline";
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -390,6 +391,8 @@ async function toggleFocus() {
   await appWindow.setFullscreen(state.focus);
 }
 
+const RESTORE_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
+
 /** Prints the note in the light theme; the system dialog offers "Save as PDF". */
 async function exportPdf() {
   if (!state.path) return;
@@ -404,13 +407,19 @@ async function exportPdf() {
   await embedsReady;
   await new Promise((r) => setTimeout(r, 400)); // let embeds draw their first frames
 
+  // Restore on the next deliberate input, not on "afterprint": WebKit fires that before it has
+  // finished drawing the pages, and re-rendering mid-print corrupts them.
+  const restore = async () => {
+    for (const type of RESTORE_EVENTS) window.removeEventListener(type, restore, true);
+    delete root.dataset.theme;
+    if (previousMode === "edit") await setMode("edit");
+    else await renderDoc();
+  };
   window.addEventListener(
     "afterprint",
-    async () => {
-      delete root.dataset.theme;
+    () => {
       document.title = previousTitle;
-      if (previousMode === "edit") await setMode("edit");
-      else await renderDoc();
+      for (const type of RESTORE_EVENTS) window.addEventListener(type, restore, true);
     },
     { once: true },
   );
@@ -488,6 +497,14 @@ window.addEventListener(
   },
   true,
 );
+
+// Chromium (Windows) gets CSS page margins and numbers; WebKit would clip pages with them.
+if (/Chrome\//.test(navigator.userAgent)) {
+  document.documentElement.classList.add("chromium");
+  const style = document.createElement("style");
+  style.textContent = printPageCss;
+  document.head.append(style);
+}
 
 // Hyphenation (which justified text needs) follows the system language.
 document.documentElement.lang = navigator.language || "en";
