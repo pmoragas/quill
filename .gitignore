@@ -24,3 +24,6 @@ pnpm-debug.log*
 target/
 yarn-debug.log*
 yarn-error.log*
+
+# Print-to-file output from local testing
+*.pdf
