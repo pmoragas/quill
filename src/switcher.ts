@@ -1,4 +1,10 @@
 export type SwitcherChoice = { kind: "open"; path: string } | { kind: "create"; path: string };
+export type SwitcherMode = "find" | "create";
+
+const PLACEHOLDERS: Record<SwitcherMode, string> = {
+  find: "Find or create a note…",
+  create: "Name of the new note…",
+};
 
 /** Subsequence match; higher is better, null if not all characters are found in order. */
 export function fuzzyScore(query: string, text: string): number | null {
@@ -22,7 +28,14 @@ function notePathFor(query: string): string | null {
   return name ? `${name}.md` : null;
 }
 
-export function choices(query: string, notes: string[]): SwitcherChoice[] {
+/** In "create" mode only the new note is offered (or the existing note of that name). */
+export function choices(query: string, notes: string[], mode: SwitcherMode = "find"): SwitcherChoice[] {
+  if (mode === "create") {
+    const path = notePathFor(query);
+    if (!path) return [];
+    const existing = notes.find((n) => n.toLowerCase() === path.toLowerCase());
+    return [existing ? { kind: "open", path: existing } : { kind: "create", path }];
+  }
   const matches: SwitcherChoice[] = (
     query.trim()
       ? notes
@@ -41,22 +54,29 @@ export function choices(query: string, notes: string[]): SwitcherChoice[] {
   return matches;
 }
 
+function choiceLabel(choice: SwitcherChoice, mode: SwitcherMode): string {
+  const name = choice.path.replace(/\.md$/, "");
+  if (choice.kind === "create") return `New note: ${choice.path}`;
+  return mode === "create" ? `Open existing: ${name}` : name;
+}
+
 /** Wires the quick-switcher overlay. Returns a function that opens it. */
 export function setupSwitcher(
   root: HTMLElement,
   getNotes: () => string[],
   onChoose: (choice: SwitcherChoice) => void,
-): () => void {
+): (mode?: SwitcherMode) => void {
   const input = root.querySelector("input")!;
   const list = root.querySelector("ul")!;
   let current: SwitcherChoice[] = [];
   let selected = 0;
+  let mode: SwitcherMode = "find";
 
   function draw() {
     list.replaceChildren(
       ...current.map((choice, i) => {
         const li = document.createElement("li");
-        li.textContent = choice.kind === "create" ? `New note: ${choice.path}` : choice.path.replace(/\.md$/, "");
+        li.textContent = choiceLabel(choice, mode);
         li.className = (i === selected ? "selected " : "") + choice.kind;
         li.addEventListener("mousedown", (e) => {
           e.preventDefault();
@@ -69,7 +89,7 @@ export function setupSwitcher(
   }
 
   function update() {
-    current = choices(input.value, getNotes());
+    current = choices(input.value, getNotes(), mode);
     selected = 0;
     draw();
   }
@@ -101,7 +121,9 @@ export function setupSwitcher(
     }
   });
 
-  return () => {
+  return (openMode: SwitcherMode = "find") => {
+    mode = openMode;
+    input.placeholder = PLACEHOLDERS[mode];
     root.hidden = false;
     input.value = "";
     update();

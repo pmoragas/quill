@@ -50,20 +50,31 @@ A minimalist, cross-platform note-taking app. Notes read with the polish of a La
 ## UX
 
 - Single column, centered, ~70 characters wide.
-- Sidebar (note list) is hidden by default; toggled with `Ctrl/Cmd+\`.
+- Sidebar (note list) is hidden by default; toggled with `Ctrl/Cmd+B`.
 - No visible toolbar or menu bar clutter; actions are keyboard-driven.
 - Typeface: CMU Serif (Computer Modern) for body and CMU Typewriter for code and the editor. The fonts are bundled so rendering is identical on every OS.
 - Paragraphs are justified and hyphenated using the system language.
 
 | Shortcut | Action |
 |---|---|
-| `Ctrl/Cmd+O` | Open a vault folder |
+| `Ctrl/Cmd+K` | All actions (searchable panel, also the `?` in the pill) |
+| `Ctrl/Cmd+N` | New note |
 | `Ctrl/Cmd+P` | Find or create a note |
-| `Ctrl/Cmd+H` | Back to the start screen |
 | `Ctrl/Cmd+E` | Toggle reading / writing |
-| `Ctrl/Cmd+\` | Toggle the note list |
-| `Ctrl/Cmd+Shift+F` | Focus mode |
 | `Ctrl/Cmd+S` | Save now (autosave also runs) |
+| `Ctrl/Cmd+B` | Toggle the note list |
+| `Ctrl/Cmd+Shift+F` | Focus mode |
+| `Ctrl/Cmd+O` | Open a vault folder |
+| `Ctrl/Cmd+H` | Back to the start screen |
+
+Shortcuts never use Alt, because AltGr arrives as Ctrl+Alt on Windows (needed for `\` on Spanish and Catalan layouts).
+
+### Window chrome
+
+- On Windows and Linux the native title bar is replaced: a floating pill at the top centre (note list, title, save state, Read/Write toggle, all actions) appears when the pointer nears the top edge, flashes on mode change, and stays visible on the start screen or after a failed save. A small handle marks it at rest.
+- Minimise, maximise and close sit faint in the top-right corner; the top 32 px strip drags the window. macOS keeps its native title bar.
+- Save state: "Saving…", "Saved" (fades after 2 s), or "Couldn't save · Retry" (stays until resolved).
+- The start screen lists up to five recent folders.
 
 ## Security
 

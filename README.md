@@ -34,12 +34,17 @@ Paste or drop an image into the editor to save it into `assets/` and insert the 
 
 | Shortcut | Action |
 |---|---|
-| `Ctrl+O` | Open a folder of notes |
+| `Ctrl+K` | All actions (searchable) |
+| `Ctrl+N` | New note |
 | `Ctrl+P` | Find or create a note |
-| `Ctrl+H` | Back to the start screen |
 | `Ctrl+E` | Switch between reading and writing |
-| `Ctrl+\` | Show or hide the note list |
+| `Ctrl+S` | Save now (it also autosaves) |
+| `Ctrl+B` | Show or hide the note list |
 | `Ctrl+Shift+F` | Focus mode (`Esc` to leave) |
+| `Ctrl+O` | Open a folder of notes |
+| `Ctrl+H` | Back to the start screen |
+
+Move the pointer to the top edge of the window to show the bar with the note list, Read/Write toggle, save state and all actions.
 
 ## Development
 

@@ -18,13 +18,16 @@
         "height": 820,
         "minWidth": 420,
         "minHeight": 320,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "decorations": false
       }
     ],
     "security": {
       "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data: blob:; frame-src asset: http://asset.localhost https:; connect-src ipc: http://ipc.localhost",
       "devCsp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' asset: http://asset.localhost data: blob:; frame-src asset: http://asset.localhost https:; connect-src 'self' ipc: http://ipc.localhost ws://localhost:1420",
-      "dangerousDisableAssetCspModification": ["style-src"],
+      "dangerousDisableAssetCspModification": [
+        "style-src"
+      ],
       "assetProtocol": {
         "enable": true,
         "scope": []

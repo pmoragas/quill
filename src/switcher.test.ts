@@ -15,4 +15,10 @@ describe("switcher", () => {
     expect(choices("calculus", notes).some((c) => c.kind === "create")).toBe(false);
     expect(choices("", notes).length).toBe(3);
   });
+
+  it("only offers the new note in create mode", () => {
+    expect(choices("topology", notes, "create")).toEqual([{ kind: "create", path: "topology.md" }]);
+    expect(choices("Calculus", notes, "create")).toEqual([{ kind: "open", path: "calculus.md" }]);
+    expect(choices("  ", notes, "create")).toEqual([]);
+  });
 });

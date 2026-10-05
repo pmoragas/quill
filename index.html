@@ -7,6 +7,32 @@
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>
+    <!-- Window chrome (custom title bar on Windows and Linux) -->
+    <div id="drag-strip" data-tauri-drag-region hidden></div>
+    <div id="window-controls" hidden>
+      <button id="win-min" type="button" aria-label="Minimise">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" /></svg>
+      </button>
+      <button id="win-max" type="button" aria-label="Maximise">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><rect x="0.5" y="0.5" width="9" height="9" /></svg>
+      </button>
+      <button id="win-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
+      </button>
+    </div>
+
+    <div id="grip" aria-hidden="true"></div>
+    <div id="pill">
+      <button id="pill-list" type="button" title="Note list" aria-label="Note list">☰</button>
+      <span id="pill-title"></span>
+      <button id="pill-save" type="button" tabindex="-1"></button>
+      <span id="pill-mode" role="group" aria-label="Mode">
+        <button id="pill-read" type="button">Read</button>
+        <button id="pill-write" type="button">Write</button>
+      </span>
+      <button id="pill-help" type="button" title="All actions" aria-label="All actions">?</button>
+    </div>
+
     <nav id="sidebar" aria-label="Notes"><ul id="note-list"></ul></nav>
 
     <main id="scroller">
@@ -14,6 +40,10 @@
         <h1>Quill</h1>
         <p id="welcome-text"></p>
         <p><button id="open-folder" type="button">Open folder…</button></p>
+        <div id="recent" hidden>
+          <div class="label">Recent folders</div>
+          <ul></ul>
+        </div>
         <div id="welcome-shortcuts" class="shortcuts"></div>
       </section>
       <article id="doc" class="page" hidden></article>
@@ -21,15 +51,15 @@
     </main>
 
     <div id="switcher" hidden>
-      <input type="text" placeholder="Find or create a note…" spellcheck="false" autocomplete="off" />
+      <input type="text" spellcheck="false" autocomplete="off" />
       <ul></ul>
     </div>
 
-    <button id="actions-button" type="button" aria-label="Actions and shortcuts" title="Actions and shortcuts">?</button>
-
-    <div id="actions" hidden>
+    <div id="palette" hidden>
       <div class="dialog" role="dialog" aria-label="Actions">
+        <input type="text" placeholder="Search actions…" spellcheck="false" autocomplete="off" />
         <ul></ul>
+        <div class="footer"><span>↑↓ choose</span><span>↵ run</span><span>Esc close</span><span class="end" id="palette-hint"></span></div>
       </div>
     </div>
 

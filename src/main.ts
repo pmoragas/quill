@@ -10,11 +10,14 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { createEditor } from "./editor";
 import { drawDiagrams } from "./mermaid";
+import { setupPalette, type Action } from "./palette";
 import { basename, dirname, joinInVault, relativeTo } from "./paths";
+import { setupPill } from "./pill";
 import { createRenderer } from "./render";
 import { setupSwitcher, type SwitcherChoice } from "./switcher";
 
 type Mode = "read" | "edit";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const scroller = $("scroller");
@@ -28,6 +31,8 @@ const appWindow = getCurrentWindow();
 
 const isMac = navigator.userAgent.includes("Mac");
 const SAVE_DELAY_MS = 500;
+const SAVED_VISIBLE_MS = 2000;
+const MAX_RECENT = 5;
 
 const state = {
   vault: null as string | null,
@@ -40,7 +45,7 @@ const state = {
   focus: false,
 };
 
-// localStorage only remembers the last vault and note; it may be unavailable.
+// localStorage only remembers conveniences (last vault and note, recent folders); it may be unavailable.
 const remember = {
   get: (key: string) => {
     try {
@@ -73,17 +78,71 @@ function notify(message: string) {
   toastTimer = window.setTimeout(() => (toast.hidden = true), 4000);
 }
 
+const noteName = (path: string) => basename(path).replace(/\.md$/, "");
+
+// ---------- pill ----------
+
+const pill = setupPill($("pill"));
+const pillTitle = $("pill-title");
+const pillSave = $("pill-save");
+let savedTimer = 0;
+
+function setSaveStatus(status: SaveStatus) {
+  clearTimeout(savedTimer);
+  const labels: Record<SaveStatus, string> = {
+    idle: "",
+    saving: "Saving…",
+    saved: "Saved",
+    error: "Couldn’t save · Retry",
+  };
+  pillSave.textContent = labels[status];
+  pillSave.dataset.status = status;
+  pillSave.tabIndex = status === "error" ? 0 : -1;
+  document.body.classList.toggle("save-error", status === "error");
+  pill.pin(status === "error" || !state.path);
+  if (status === "saved") savedTimer = window.setTimeout(() => setSaveStatus("idle"), SAVED_VISIBLE_MS);
+}
+
+function drawPill() {
+  pillTitle.textContent = state.path ? noteName(state.path) : "";
+  $("pill-list").hidden = !state.vault;
+  $("pill-mode").hidden = !state.path;
+  $("pill-read").classList.toggle("current", state.mode === "read");
+  $("pill-write").classList.toggle("current", state.mode === "edit");
+  pill.pin(!state.path || pillSave.dataset.status === "error");
+}
+
+pillSave.addEventListener("click", () => {
+  if (pillSave.dataset.status === "error") flush();
+});
+$("pill-read").addEventListener("click", () => setMode("read"));
+$("pill-write").addEventListener("click", () => setMode("edit"));
+$("pill-list").addEventListener("click", toggleSidebar);
+
+// ---------- window controls (custom title bar on Windows and Linux) ----------
+
+if (!isMac) {
+  $("drag-strip").hidden = false;
+  $("window-controls").hidden = false;
+  $("win-min").addEventListener("click", () => appWindow.minimize());
+  $("win-max").addEventListener("click", () => appWindow.toggleMaximize());
+  $("win-close").addEventListener("click", () => appWindow.close());
+}
+
 // ---------- saving ----------
 
 async function flush() {
   clearTimeout(state.saveTimer);
   if (!state.dirty || !state.path) return;
   state.dirty = false;
+  setSaveStatus("saving");
   try {
     await invoke("write_note", { path: state.path, content: state.text });
+    setSaveStatus("saved");
   } catch (error) {
     state.dirty = true;
-    notify(`Could not save: ${error}`);
+    setSaveStatus("error");
+    console.error("save failed", error);
   }
 }
 
@@ -129,7 +188,10 @@ async function renderDoc() {
 
 async function setMode(mode: Mode) {
   if (!state.path) return;
+  const changed = mode !== state.mode;
   state.mode = mode;
+  drawPill();
+  if (changed) pill.flash();
   if (mode === "read") {
     await flush();
     await renderDoc();
@@ -140,11 +202,57 @@ async function setMode(mode: Mode) {
   }
 }
 
+function toggleSidebar() {
+  if (state.vault) document.body.classList.toggle("sidebar-open");
+}
+
+// ---------- recent folders ----------
+
+function recentFolders(): string[] {
+  try {
+    const list = JSON.parse(remember.get("recentVaults") ?? "[]");
+    return Array.isArray(list) ? list.filter((p) => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberFolder(path: string, add: boolean) {
+  const rest = recentFolders().filter((p) => p !== path);
+  remember.set("recentVaults", JSON.stringify(add ? [path, ...rest].slice(0, MAX_RECENT) : rest));
+}
+
+function drawRecent() {
+  const folders = recentFolders().filter((p) => p !== state.vault);
+  const box = $("recent");
+  box.hidden = folders.length === 0;
+  box.querySelector("ul")!.replaceChildren(
+    ...folders.map((path) => {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      // Split on either separator but show the path as the OS writes it.
+      const cut = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+      const name = document.createElement("span");
+      name.textContent = path.slice(cut + 1);
+      const where = document.createElement("span");
+      where.className = "where";
+      where.textContent = path.slice(0, Math.max(cut, 0));
+      button.append(name, where);
+      button.title = path;
+      button.addEventListener("click", () => openVault(path));
+      li.append(button);
+      return li;
+    }),
+  );
+}
+
 function showWelcome() {
   welcomeText.textContent = state.vault
-    ? `${state.notes.length} notes in ${basename(state.vault.replace(/\\/g, "/"))}. Press ${modLabel("P")} to open one.`
+    ? `${state.notes.length} notes in ${basename(state.vault.replace(/\\/g, "/"))}. Press ${isMac ? "⌘" : "Ctrl+"}P to open one.`
     : `Open a folder of Markdown notes to begin.`;
+  drawRecent();
   show("welcome");
+  drawPill();
 }
 
 function drawNoteList() {
@@ -159,7 +267,7 @@ function drawNoteList() {
         span.textContent = `${folder}/`;
         button.append(span);
       }
-      button.append(basename(path).replace(/\.md$/, ""));
+      button.append(noteName(path));
       button.classList.toggle("current", path === state.path);
       button.addEventListener("click", () => openNote(path));
       li.append(button);
@@ -183,8 +291,10 @@ async function openNote(path: string, mode: Mode = "read") {
   editor.load(state.text);
   remember.set("lastNote", path);
   drawNoteList();
-  await appWindow.setTitle(`${basename(path).replace(/\.md$/, "")} — Quill`);
+  setSaveStatus("idle");
+  await appWindow.setTitle(`${noteName(path)} — Quill`);
   await setMode(mode);
+  drawPill();
   scroller.scrollTop = 0;
 }
 
@@ -201,9 +311,8 @@ async function goHome() {
 }
 
 async function createNote(path: string) {
-  const title = basename(path).replace(/\.md$/, "");
   try {
-    await invoke("write_note", { path, content: `# ${title}\n\n` });
+    await invoke("write_note", { path, content: `# ${noteName(path)}\n\n` });
     state.notes = await invoke<string[]>("list_notes");
   } catch (error) {
     notify(String(error));
@@ -217,12 +326,15 @@ async function openVault(path: string) {
   try {
     state.notes = await invoke<string[]>("open_vault", { path });
   } catch (error) {
+    rememberFolder(path, false);
+    if (!state.path) drawRecent();
     notify(String(error));
     return false;
   }
   state.vault = await invoke<string>("vault_path");
   state.path = null;
   remember.set("vault", path);
+  rememberFolder(path, true);
   drawNoteList();
   await appWindow.setTitle("Quill");
   showWelcome();
@@ -251,7 +363,7 @@ doc.addEventListener("click", (event) => {
   }
 });
 
-// ---------- keyboard ----------
+// ---------- actions ----------
 
 const openSwitcher = setupSwitcher(
   $("switcher"),
@@ -259,100 +371,77 @@ const openSwitcher = setupSwitcher(
   (choice: SwitcherChoice) => (choice.kind === "open" ? openNote(choice.path) : createNote(choice.path)),
 );
 
-function modLabel(key: string) {
-  return isMac ? `⌘${key}` : `Ctrl+${key}`;
-}
-
 async function toggleFocus() {
   state.focus = !state.focus;
   document.body.classList.toggle("focus", state.focus);
   await appWindow.setFullscreen(state.focus);
 }
 
-// One list drives the keyboard shortcuts, the welcome screen and the actions modal.
-interface Action {
-  key: string;
-  shift?: boolean;
-  label: string;
-  run: () => unknown;
-}
+const hasVault = () => !!state.vault;
+const hasNote = () => !!state.path;
 
+// One list drives the keyboard shortcuts, the actions panel and the start screen.
 const actions: Action[] = [
-  { key: "O", label: "Open a folder of notes", run: pickVault },
-  { key: "P", label: "Find or create a note", run: () => state.vault && openSwitcher() },
-  { key: "H", label: "Back to start screen", run: goHome },
-  { key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read") },
-  { key: "\\", label: "Show or hide the note list", run: () => document.body.classList.toggle("sidebar-open") },
-  { key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
-  { key: "S", label: "Save now", run: flush },
+  { group: "Note", key: "N", label: "New note", run: () => openSwitcher("create"), enabled: hasVault },
+  { group: "Note", key: "P", label: "Find or create a note", run: () => openSwitcher(), enabled: hasVault },
+  { group: "Note", key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read"), enabled: hasNote },
+  { group: "Note", key: "S", label: "Save now", run: flush, enabled: hasNote },
+  { group: "View", key: "B", label: "Show or hide the note list", run: toggleSidebar, enabled: hasVault },
+  { group: "View", key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
+  { group: "Folder", key: "O", label: "Open a folder of notes", run: pickVault },
+  { group: "Folder", key: "H", label: "Back to start screen", run: goHome, enabled: hasNote },
 ];
 
-function shortcutLabel(action: Action) {
-  return `${isMac ? "⌘" : "Ctrl "}${action.shift ? "⇧ " : ""}${action.key}`;
-}
+const palette = setupPalette($("palette"), actions, isMac);
+const ALL_ACTIONS_KEY = "K";
+$("pill-help").addEventListener("click", () => palette.open());
+$("palette-hint").textContent = `${isMac ? "⌘" : "Ctrl"} ${ALL_ACTIONS_KEY} or ?`;
 
-function actionRow(action: Action, tag: "li" | "div", shortcutFirst = false) {
-  const row = document.createElement(tag);
-  const label = document.createElement("span");
-  label.textContent = action.label;
-  const kbd = document.createElement("kbd");
-  kbd.textContent = shortcutLabel(action);
-  if (shortcutFirst) row.append(kbd, label);
-  else row.append(label, kbd);
-  return row;
-}
-
-$("welcome-shortcuts").replaceChildren(...actions.map((a) => actionRow(a, "div", true)));
-
-const actionsModal = $("actions");
-const actionsList = actionsModal.querySelector("ul")!;
-actionsList.replaceChildren(
-  ...actions.map((action) => {
-    const row = actionRow(action, "li");
-    row.addEventListener("click", () => {
-      closeActions();
-      action.run();
-    });
+// The start screen shows only the two entry points; everything else lives in the panel.
+$("welcome-shortcuts").replaceChildren(
+  ...[
+    ["O", "Open a folder"],
+    [ALL_ACTIONS_KEY, "All actions"],
+  ].map(([key, label]) => {
+    const row = document.createElement("div");
+    const kbd = document.createElement("kbd");
+    kbd.textContent = `${isMac ? "⌘" : "Ctrl"} ${key}`;
+    const span = document.createElement("span");
+    span.textContent = label;
+    row.append(kbd, span);
     return row;
   }),
 );
 
-function openActions() {
-  actionsModal.hidden = false;
-}
-
-function closeActions() {
-  actionsModal.hidden = true;
-}
-
-$("actions-button").addEventListener("click", openActions);
-actionsModal.addEventListener("click", (event) => {
-  if (event.target === actionsModal) closeActions();
-});
-
 window.addEventListener(
   "keydown",
   (event) => {
-    if (event.key === "Escape" && !actionsModal.hidden) {
-      event.preventDefault();
-      closeActions();
-      return;
-    }
-    if (event.key === "Escape" && state.focus && $("switcher").hidden) {
+    if (event.key === "Escape" && state.focus && !palette.isOpen() && $("switcher").hidden) {
       event.preventDefault();
       toggleFocus();
       return;
     }
     const mod = isMac ? event.metaKey : event.ctrlKey;
+    // AltGr arrives as Ctrl+Alt on Windows, so Alt combinations are never shortcuts.
     if (!mod || event.altKey) return;
     const key = event.key.toUpperCase();
-    const action = actions.find((a) => a.key === key && !!a.shift === event.shiftKey);
-    if (action) {
+    if (key === ALL_ACTIONS_KEY && !event.shiftKey) {
       event.preventDefault();
       event.stopPropagation();
-      closeActions();
-      action.run();
+      if (palette.isOpen()) palette.close();
+      else palette.open();
+      return;
     }
+    const action = actions.find((a) => a.key === key && !!a.shift === event.shiftKey);
+    if (!action) return;
+    event.preventDefault();
+    event.stopPropagation();
+    palette.close();
+    if (action.enabled?.() === false) {
+      notify(hasVault() ? "Open a note first." : `Open a folder first (${isMac ? "⌘" : "Ctrl+"}O).`);
+      return;
+    }
+    action.run();
   },
   true,
 );

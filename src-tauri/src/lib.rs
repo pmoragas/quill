@@ -184,6 +184,15 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(Vault::default())
+        .setup(|_app| {
+            // The window is frameless so Windows and Linux get Quill's own title bar;
+            // macOS keeps its native one (traffic-light buttons).
+            #[cfg(target_os = "macos")]
+            _app.get_webview_window("main")
+                .expect("main window")
+                .set_decorations(true)?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             open_vault, vault_path, list_notes, read_note, write_note, save_asset
         ])
