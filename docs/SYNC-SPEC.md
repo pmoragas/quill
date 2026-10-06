@@ -116,6 +116,19 @@ This record is the *base*: the last state both sides agreed on.
 
 To verify early: embeds (iframes over Quill's asset protocol) and the official plugins Quill uses, on Android.
 
+## Desktop sync, as built
+
+- **Engine** (`src-tauri/src/sync/`): `plan.rs` is the decision table, one test per row; `engine.rs` scans the folder, lists the cloud, and runs one pass against a `Remote` trait (tested with an in-memory remote that has R2's version rules); `http.rs` is the real remote.
+- **Sync record:** `<vault>/.quill/sync.json`, one `{hash, etag}` per file. Hidden folders, `node_modules`, temporary files, names the API would refuse, and files over 20 MB are skipped.
+- **Both sides have it, no base:** the contents are compared before anything is called a conflict, so two devices that already hold the same note do not produce a copy.
+- **Progress is kept:** if the connection drops mid-pass, what was synced stays synced and the next pass continues.
+- **One folder:** sync is switched on for one folder at a time (saved in the app's settings), so opening another folder never mixes two vaults into one bucket.
+- **First sync asks first:** a folder with no sync record shows what Quill will upload or download, and runs only after you confirm. The backend refuses an unconfirmed first run too.
+- **Settings** (action "Sync settings…"): server address (https, or http on this machine for development), device token, device name. The token is kept in the app's settings file, readable only by the user on Linux and macOS, and never sent back to the interface. Operating-system secure storage is S4.
+- **Status** in the pill: Synced, Syncing…, Offline, "Check sync token", "Sync failed · Retry", or "n conflicts" (click to list the copies in the note finder). Conflicts also show a toast.
+- **When it runs:** after opening the folder, 3 s after a save, every 5 minutes, when the window returns after 30 s, when the network returns, and from "Sync now". Automatic runs closer than 5 s apart are skipped.
+- **Open note:** if sync downloads a new version of the note that is open (and it has no unsaved edits) it reloads; if sync deleted it, Quill returns to the start screen.
+
 ## Cost (one person)
 
 A vault of notes and images is a few hundred MB at most. On R2 this stays inside the free tier; on S3 it costs cents per month.
@@ -123,7 +136,7 @@ A vault of notes and images is a few hundred MB at most. On R2 this stays inside
 ## Milestones
 
 1. **S1, backend:** bucket, sync API with device tokens, conditional writes. *Done: deployed at `https://quill-sync.pmoragas.workers.dev` and verified against the real R2 bucket (`npm run smoke`): R2 enforces `If-Match` and `If-None-Match`, so the Worker needs no check of its own.*
-2. **S2, desktop sync:** sync engine, sync record, conflict copies, pill status.
+2. **S2, desktop sync:** sync engine, sync record, conflict copies, pill status. *Done: see "Desktop sync, as built" below.*
 3. **S3, Android:** Tauri Android build, phone layout, sync on resume.
 4. **S4, hardening:** secure token storage, size limits; end-to-end encryption if wanted later.
 

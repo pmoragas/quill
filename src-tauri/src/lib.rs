@@ -1,5 +1,6 @@
 mod folders;
 mod pdf;
+mod sync;
 
 use std::fs;
 use std::path::{Component, Path, PathBuf};
@@ -202,6 +203,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(Vault::default())
+        .manage(sync::SyncLock::default())
         .setup(|_app| {
             // The window is frameless so Windows and Linux get Quill's own title bar;
             // macOS keeps its native one (traffic-light buttons).
@@ -221,6 +223,12 @@ pub fn run() {
             export_pdf,
             folders::list_folder,
             folders::default_folder,
+            sync::sync_get_config,
+            sync::sync_set_config,
+            sync::sync_disable,
+            sync::sync_check,
+            sync::sync_plan,
+            sync::sync_run,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

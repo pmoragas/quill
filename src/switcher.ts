@@ -65,7 +65,7 @@ export function setupSwitcher(
   root: HTMLElement,
   getNotes: () => string[],
   onChoose: (choice: SwitcherChoice) => void,
-): (mode?: SwitcherMode) => void {
+): (mode?: SwitcherMode, query?: string) => void {
   const input = root.querySelector("input")!;
   const list = root.querySelector("ul")!;
   let current: SwitcherChoice[] = [];
@@ -121,11 +121,11 @@ export function setupSwitcher(
     }
   });
 
-  return (openMode: SwitcherMode = "find") => {
+  return (openMode: SwitcherMode = "find", query = "") => {
     mode = openMode;
     input.placeholder = PLACEHOLDERS[mode];
     root.hidden = false;
-    input.value = "";
+    input.value = query;
     update();
     input.focus();
   };

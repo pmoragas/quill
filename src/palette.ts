@@ -1,19 +1,19 @@
 import { fuzzyScore } from "./switcher";
 
-export type ActionGroup = "Note" | "View" | "Folder";
+export type ActionGroup = "Note" | "View" | "Folder" | "Sync";
 
 export interface Action {
   group: ActionGroup;
   label: string;
-  /** Letter pressed together with Ctrl (Cmd on macOS). */
-  key: string;
+  /** Letter pressed together with Ctrl (Cmd on macOS). Actions without one are panel-only. */
+  key?: string;
   shift?: boolean;
   run: () => unknown;
   /** Disabled actions are shown greyed out and cannot run. */
   enabled?: () => boolean;
 }
 
-const GROUPS: ActionGroup[] = ["Note", "View", "Folder"];
+const GROUPS: ActionGroup[] = ["Note", "View", "Folder", "Sync"];
 
 export function isEnabled(action: Action): boolean {
   return action.enabled?.() ?? true;
@@ -31,6 +31,7 @@ export function filterActions(query: string, actions: Action[]): Action[] {
 }
 
 export function keysFor(action: Action, isMac: boolean): string[] {
+  if (!action.key) return [];
   return [isMac ? "⌘" : "Ctrl", ...(action.shift ? ["⇧"] : []), action.key];
 }
 

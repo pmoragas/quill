@@ -26,6 +26,7 @@
       <button id="pill-list" type="button" title="Note list" aria-label="Note list">☰</button>
       <span id="pill-title"></span>
       <button id="pill-save" type="button" tabindex="-1"></button>
+      <button id="pill-sync" type="button" tabindex="-1"></button>
       <span id="pill-mode" role="group" aria-label="Mode">
         <button id="pill-read" type="button">Read</button>
         <button id="pill-write" type="button">Write</button>
@@ -118,6 +119,25 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div id="sync-settings" hidden>
+      <form class="dialog" role="dialog" aria-label="Sync settings">
+        <header><span class="title">Sync settings</span><span class="hint">Esc close</span></header>
+        <div class="fields">
+          <label>Server address<input name="url" type="url" placeholder="https://quill-sync.example.workers.dev" spellcheck="false" autocomplete="off" /></label>
+          <label>Device token<input name="token" type="password" spellcheck="false" autocomplete="off" /></label>
+          <label>This device is called<input name="device" type="text" placeholder="desktop" spellcheck="false" autocomplete="off" /></label>
+          <label class="check"><input name="enable" type="checkbox" /><span>Sync this folder: <b class="folder-name"></b></span></label>
+          <p class="note"></p>
+        </div>
+        <div class="actions">
+          <span class="status"></span>
+          <button type="button" class="test">Test connection</button>
+          <button type="button" class="stop">Stop syncing</button>
+          <button type="submit" class="save">Save</button>
+        </div>
+      </form>
     </div>
 
     <div id="toast" role="status" hidden></div>

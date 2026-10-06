@@ -49,6 +49,12 @@ Exported PDFs always use the light theme. Your own HTML embeds can follow it: wh
 
 Move the pointer to the top edge of the window to show the bar with the note list, Read/Write toggle, save state and all actions.
 
+## Sync (desktop and phone)
+
+Quill can keep a folder in sync with a private cloud bucket (Cloudflare R2). It works offline, never overwrites a newer version, and when two devices edit the same note it keeps both: the other version is saved as `Name (conflict, device, date).md`.
+
+Set up the server once from [sync-api/](sync-api/README.md), then in Quill press `Ctrl+K`, choose **Sync settings…**, paste the server address and this device's token, tick **Sync this folder** and save. The first sync shows what it will copy and waits for your confirmation. Design: [docs/SYNC-SPEC.md](docs/SYNC-SPEC.md).
+
 ## Development
 
 Requires Node.js, Rust and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).

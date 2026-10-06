@@ -11,6 +11,8 @@ const actions: Action[] = [
 describe("palette", () => {
   it("lists actions in group order when the query is empty", () => {
     expect(filterActions("", actions).map((a) => a.group)).toEqual(["Note", "View", "Folder"]);
+    const withSync = [...actions, { group: "Sync" as const, label: "Sync now", run: noop }];
+    expect(filterActions("", withSync).map((a) => a.group).at(-1)).toBe("Sync");
   });
 
   it("searches labels", () => {
@@ -23,5 +25,6 @@ describe("palette", () => {
     expect(isEnabled(actions[0])).toBe(true);
     expect(keysFor(actions[2], false)).toEqual(["Ctrl", "⇧", "F"]);
     expect(keysFor(actions[0], true)).toEqual(["⌘", "O"]);
+    expect(keysFor({ group: "Sync", label: "Sync now", run: noop }, false)).toEqual([]);
   });
 });

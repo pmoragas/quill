@@ -5,7 +5,7 @@ import "./styles.css";
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { open } from "@tauri-apps/plugin-dialog";
+import { ask, open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { createEditor } from "./editor";
@@ -16,6 +16,8 @@ import { setupPalette, type Action } from "./palette";
 import { basename, dirname, joinInVault, relativeTo } from "./paths";
 import { setupPill } from "./pill";
 import { createRenderer } from "./render";
+import { createSync, type Report } from "./sync";
+import { setupSyncSettings } from "./sync-settings";
 import { setupSwitcher, type SwitcherChoice } from "./switcher";
 
 type Mode = "read" | "edit";
@@ -141,6 +143,7 @@ async function flush() {
   try {
     await invoke("write_note", { path: state.path, content: state.text });
     setSaveStatus("saved");
+    syncUi.afterSave();
   } catch (error) {
     state.dirty = true;
     setSaveStatus("error");
@@ -274,6 +277,7 @@ function showWelcome() {
 }
 
 function drawNoteList() {
+  syncUi.update();
   noteList.replaceChildren(
     ...state.notes.map((path) => {
       const li = document.createElement("li");
@@ -356,6 +360,7 @@ async function openVault(path: string) {
   drawNoteList();
   await appWindow.setTitle("Quill");
   showWelcome();
+  syncUi.refreshConfig().then(() => syncUi.run());
   return true;
 }
 
@@ -392,6 +397,51 @@ doc.addEventListener("click", (event) => {
 });
 
 // ---------- actions ----------
+
+// ---------- sync ----------
+
+const pillSync = $("pill-sync");
+
+/** Brings the interface up to date after a sync changed files on disk. */
+async function syncChanged(report: Report) {
+  state.notes = await invoke<string[]>("list_notes");
+  drawNoteList();
+  const open = state.path;
+  if (!open) return;
+  if (report.deleted.includes(open)) {
+    notify(`“${noteName(open)}” was deleted on another device.`);
+    await goHome();
+  } else if (report.downloaded.includes(open) && !state.dirty) {
+    // Another device edited the note that is open here.
+    state.text = await invoke<string>("read_note", { path: open });
+    editor.load(state.text);
+    if (state.mode === "read") await renderDoc();
+  }
+}
+
+const syncUi = createSync({
+  notes: () => state.notes,
+  flush,
+  confirm: (message) => ask(message, { title: "Quill sync", kind: "info", okLabel: "Start sync", cancelLabel: "Not now" }),
+  notify,
+  onChanged: syncChanged,
+  onState(label) {
+    pillSync.textContent = label.text;
+    pillSync.dataset.status = label.status;
+    pillSync.tabIndex = label.text ? 0 : -1;
+    document.body.classList.toggle("sync-attention", label.status === "error");
+  },
+});
+
+pillSync.addEventListener("click", () => {
+  if (pillSync.dataset.status === "conflict") openSwitcher("find", "(conflict");
+  else syncUi.run(true);
+});
+
+const syncSettings = setupSyncSettings($("sync-settings"), {
+  folderName: () => (state.vault ? basename(state.vault.replace(/\\/g, "/")) : null),
+  changed: () => syncUi.refreshConfig().then(() => syncUi.run(true)),
+});
 
 const openSwitcher = setupSwitcher(
   $("switcher"),
@@ -530,6 +580,8 @@ const actions: Action[] = [
   { group: "View", key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
   { group: "Folder", key: "O", label: "Open a folder of notes", run: () => folderPicker.open() },
   { group: "Folder", key: "H", label: "Back to start screen", run: goHome, enabled: hasNote },
+  { group: "Sync", label: "Sync now", run: () => syncUi.run(true), enabled: () => syncUi.enabledHere() },
+  { group: "Sync", label: "Sync settings…", run: () => syncSettings.open() },
 ];
 
 const palette = setupPalette($("palette"), actions, isMac);
@@ -556,7 +608,8 @@ $("welcome-shortcuts").replaceChildren(
 window.addEventListener(
   "keydown",
   (event) => {
-    const panelOpen = palette.isOpen() || folderPicker.isOpen() || exportPanel.isOpen() || !$("switcher").hidden;
+    const panelOpen =
+      palette.isOpen() || folderPicker.isOpen() || exportPanel.isOpen() || syncSettings.isOpen() || !$("switcher").hidden;
     if (event.key === "Escape" && state.focus && !panelOpen) {
       event.preventDefault();
       toggleFocus();
@@ -617,4 +670,5 @@ appWindow.onCloseRequested(flush);
   } else {
     showWelcome();
   }
+  syncUi.start();
 })();

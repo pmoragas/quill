@@ -945,7 +945,8 @@ body.focus:not(.save-error) #pill {
 /* ---------- open folder panel ---------- */
 
 #folders,
-#export {
+#export,
+#sync-settings {
   position: fixed;
   inset: 0;
   display: flex;
@@ -957,12 +958,14 @@ body.focus:not(.save-error) #pill {
 }
 
 #folders[hidden],
-#export[hidden] {
+#export[hidden],
+#sync-settings[hidden] {
   display: none;
 }
 
 #folders .dialog,
-#export .dialog {
+#export .dialog,
+#sync-settings .dialog {
   background: var(--bg);
   border: 1px solid var(--rule);
   border-radius: 6px;
@@ -1278,4 +1281,155 @@ body.focus:not(.save-error) #pill {
   html[data-theme="light"] body {
     background: #fff;
   }
+}
+
+/* ---------- sync: pill status and settings ---------- */
+
+#pill-sync {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+#pill-sync:empty {
+  display: none;
+}
+
+#pill-sync[data-status="syncing"],
+#pill-sync[data-status="offline"] {
+  font-style: italic;
+}
+
+#pill-sync[data-status="error"] {
+  color: #b3402c;
+  text-decoration: underline;
+}
+
+#pill-sync[data-status="conflict"] {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+#sync-settings .dialog {
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+#sync-settings header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#sync-settings .title {
+  font-size: 17px;
+}
+
+#sync-settings .hint {
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#sync-settings .fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px 6px;
+}
+
+#sync-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#sync-settings input[type="url"],
+#sync-settings input[type="password"],
+#sync-settings input[type="text"] {
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+#sync-settings input:focus {
+  border-color: var(--accent);
+}
+
+#sync-settings label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+#sync-settings label.check input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+#sync-settings .note {
+  margin: 0;
+  min-height: 1.2em;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#sync-settings .actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 18px;
+}
+
+#sync-settings .status {
+  flex: 1;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#sync-settings .status.error {
+  color: #b3402c;
+}
+
+#sync-settings .status.ok {
+  color: #4d7a4f;
+}
+
+#sync-settings .actions button {
+  padding: 5px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#sync-settings .actions button[hidden] {
+  display: none;
+}
+
+#sync-settings .actions .save {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+#sync-settings .actions button:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
