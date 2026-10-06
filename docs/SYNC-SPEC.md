@@ -122,7 +122,7 @@ A vault of notes and images is a few hundred MB at most. On R2 this stays inside
 
 ## Milestones
 
-1. **S1, backend:** bucket, sync API with device tokens, conditional writes.
+1. **S1, backend:** bucket, sync API with device tokens, conditional writes. *Built in `sync-api/` and tested against emulated R2 and a local Worker. Deploying it and running `npm run smoke` against the real bucket confirms R2's version checks.*
 2. **S2, desktop sync:** sync engine, sync record, conflict copies, pill status.
 3. **S3, Android:** Tauri Android build, phone layout, sync on resume.
 4. **S4, hardening:** secure token storage, size limits; end-to-end encryption if wanted later.

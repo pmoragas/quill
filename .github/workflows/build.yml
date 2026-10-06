@@ -40,3 +40,23 @@ jobs:
       - run: npm run tauri build -- --no-bundle
 
       - run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  sync-api:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: sync-api
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: sync-api/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
