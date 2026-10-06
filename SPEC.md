@@ -113,3 +113,7 @@ All v1 milestones are implemented.
 - UI is vanilla TypeScript.
 - The editor is source-only, with the read/write toggle (no live preview).
 - No front-matter in v1.
+
+## Related specs
+
+- [docs/SYNC-SPEC.md](docs/SYNC-SPEC.md): cloud sync between desktop and Android (planned).
