@@ -1,6 +1,6 @@
 [package]
 name = "quill"
-version = "1.0.0"
+version = "1.1.0"
 description = "Minimalist notes with LaTeX-grade typography"
 authors = ["pmoragas"]
 edition = "2021"
@@ -25,7 +25,6 @@ serde_json = "1"
 tauri-plugin-dialog = "2"
 tokio = { version = "1", features = ["sync", "rt"] }
 sha2 = "0.10"
-reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json"] }
 
 # Silent PDF export uses each platform's webview engine directly (versions match wry's).
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -48,3 +47,13 @@ strip = true
 [dev-dependencies]
 tempfile = "3"
 tokio = { version = "1", features = ["macros", "rt"] }
+
+# HTTPS for sync: each desktop uses its system TLS. Android has none Rust can link, so it uses rustls
+# with Mozilla's bundled root certificates (see sync/http.rs).
+[target.'cfg(not(target_os = "android"))'.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "json"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1"

@@ -1,5 +1,6 @@
 // The "Sync settings" panel: server address, device token, device name, which folder syncs.
 import { invoke } from "@tauri-apps/api/core";
+import { isMobile } from "./platform";
 import type { ConfigView } from "./sync";
 
 export interface SettingsHooks {
@@ -8,6 +9,9 @@ export interface SettingsHooks {
   /** Called after settings were saved or sync was stopped. */
   changed: () => void;
 }
+
+/** Shown in conflict copies, so it says where the other version came from. */
+const defaultDeviceName = isMobile ? "phone" : "desktop";
 
 export function setupSyncSettings(root: HTMLElement, hooks: SettingsHooks) {
   const form = root as HTMLElement;
@@ -33,7 +37,7 @@ export function setupSyncSettings(root: HTMLElement, hooks: SettingsHooks) {
     field("url").value = config.url;
     field("token").value = "";
     field("token").placeholder = config.hasToken ? "Saved (leave empty to keep it)" : "Paste the token for this device";
-    field("device").value = config.device || "desktop";
+    field("device").value = config.device || defaultDeviceName;
     const folder = hooks.folderName();
     form.querySelector(".folder-name")!.textContent = folder ?? "none open";
     field("enable").disabled = !folder;

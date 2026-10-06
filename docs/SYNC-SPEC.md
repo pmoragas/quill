@@ -137,7 +137,7 @@ A vault of notes and images is a few hundred MB at most. On R2 this stays inside
 
 1. **S1, backend:** bucket, sync API with device tokens, conditional writes. *Done: deployed at `https://quill-sync.pmoragas.workers.dev` and verified against the real R2 bucket (`npm run smoke`): R2 enforces `If-Match` and `If-None-Match`, so the Worker needs no check of its own.*
 2. **S2, desktop sync:** sync engine, sync record, conflict copies, pill status. *Done: see "Desktop sync, as built" below.*
-3. **S3, Android:** Tauri Android build, phone layout, sync on resume.
+3. **S3, Android:** Tauri Android build, phone layout, sync on resume. *Built: see [ANDROID.md](ANDROID.md). The APK builds and is signed, and the phone layout is tested in an emulated browser; it has not yet been run on a real device.*
 4. **S4, hardening:** secure token storage, size limits; end-to-end encryption if wanted later.
 
 ## Testing

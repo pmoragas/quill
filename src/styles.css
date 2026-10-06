@@ -161,7 +161,8 @@ body.focus #scroller {
   color: var(--muted);
 }
 
-#open-folder {
+#open-folder,
+#welcome-sync {
   font: inherit;
   font-size: 0.9em;
   color: var(--fg);
@@ -172,7 +173,8 @@ body.focus #scroller {
   cursor: pointer;
 }
 
-#open-folder:hover {
+#open-folder:hover,
+#welcome-sync:hover {
   border-color: var(--muted);
 }
 
@@ -1432,4 +1434,98 @@ body.focus:not(.save-error) #pill {
 #sync-settings .actions button:disabled {
   opacity: 0.6;
   cursor: progress;
+}
+
+/* ---------- phone ---------- */
+
+.phone-only {
+  display: none;
+}
+
+.mobile .phone-only {
+  display: block;
+}
+
+.mobile #open-folder,
+.mobile #recent,
+.mobile .shortcuts {
+  display: none;
+}
+
+.mobile body {
+  font-size: 17px;
+}
+
+.mobile .page {
+  padding: calc(64px + env(safe-area-inset-top, 0px)) 18px 30vh;
+}
+
+/* A thumb-sized handle at the top; tap it to show the bar. */
+.mobile #grip {
+  top: env(safe-area-inset-top, 0px);
+  width: 96px;
+  height: 30px;
+  margin-left: -48px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.mobile #grip::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 34px;
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule);
+}
+
+.mobile #pill {
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  max-width: calc(100vw - 16px);
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.mobile #pill button {
+  min-width: 36px;
+  min-height: 32px;
+}
+
+.mobile #pill-mode button {
+  padding: 5px 12px;
+}
+
+.mobile #sidebar {
+  width: min(85vw, 20rem);
+  padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  font-size: 1rem;
+}
+
+/* The shadow only shows while the list is open; otherwise it would bleed in from the left edge. */
+.mobile body.sidebar-open #sidebar {
+  box-shadow: 0 0 30px rgb(0 0 0 / 0.2);
+}
+
+.mobile #note-list button {
+  padding: 0.6rem 0.8rem;
+}
+
+/* The list covers the note instead of squeezing it. */
+.mobile body.sidebar-open #scroller {
+  margin-left: 0;
+}
+
+.mobile #toast {
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile #palette,
+.mobile #sync-settings {
+  padding-top: calc(5vh + env(safe-area-inset-top, 0px));
+}
+
+.mobile #sync-settings .actions {
+  flex-wrap: wrap;
 }

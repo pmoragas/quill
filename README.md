@@ -55,6 +55,10 @@ Quill can keep a folder in sync with a private cloud bucket (Cloudflare R2). It 
 
 Set up the server once from [sync-api/](sync-api/README.md), then in Quill press `Ctrl+K`, choose **Sync settings…**, paste the server address and this device's token, tick **Sync this folder** and save. The first sync shows what it will copy and waits for your confirmation. Design: [docs/SYNC-SPEC.md](docs/SYNC-SPEC.md).
 
+## Android
+
+An Android app (64-bit ARM) is attached to each release. It keeps its notes inside the app and fills them through sync. See [docs/ANDROID.md](docs/ANDROID.md).
+
 ## Development
 
 Requires Node.js, Rust and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).

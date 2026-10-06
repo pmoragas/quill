@@ -38,6 +38,17 @@ fn is_local(url: &Url) -> bool {
     matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
 }
 
+/// Android: TLS with Mozilla's root certificates, bundled in the app.
+#[cfg(target_os = "android")]
+fn android_tls() -> rustls::ClientConfig {
+    let roots = rustls::RootCertStore { roots: webpki_roots::TLS_SERVER_ROOTS.to_vec() };
+    rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(rustls::crypto::ring::default_provider()))
+        .with_safe_default_protocol_versions()
+        .expect("ring supports the default TLS versions")
+        .with_root_certificates(roots)
+        .with_no_client_auth()
+}
+
 fn offline(e: reqwest::Error) -> SyncError {
     if e.is_connect() || e.is_timeout() || e.is_request() {
         SyncError::Offline(e.without_url().to_string())
@@ -59,11 +70,10 @@ impl Http {
         if token.trim().is_empty() {
             return Err("The device token is empty.".into());
         }
-        let client = Client::builder()
-            .timeout(REQUEST_TIMEOUT)
-            .connect_timeout(CONNECT_TIMEOUT)
-            .build()
-            .map_err(|e| e.to_string())?;
+        let builder = Client::builder().timeout(REQUEST_TIMEOUT).connect_timeout(CONNECT_TIMEOUT);
+        #[cfg(target_os = "android")]
+        let builder = builder.use_preconfigured_tls(android_tls());
+        let client = builder.build().map_err(|e| e.to_string())?;
         Ok(Http { client, base, token: token.trim().to_string() })
     }
 

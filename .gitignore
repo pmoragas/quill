@@ -27,3 +27,6 @@ yarn-error.log*
 
 # Print-to-file output from local testing
 *.pdf
+
+# Built Android packages
+dist-android/

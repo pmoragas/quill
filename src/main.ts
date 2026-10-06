@@ -4,7 +4,6 @@ import "katex/dist/katex.min.css";
 import "./styles.css";
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
@@ -15,6 +14,7 @@ import { drawDiagrams } from "./mermaid";
 import { setupPalette, type Action } from "./palette";
 import { basename, dirname, joinInVault, relativeTo } from "./paths";
 import { setupPill } from "./pill";
+import { appWindow, isMobile } from "./platform";
 import { createRenderer } from "./render";
 import { createSync, type Report } from "./sync";
 import { setupSyncSettings } from "./sync-settings";
@@ -31,12 +31,12 @@ const doc = $("doc");
 const editorEl = $("editor");
 const noteList = $("note-list");
 const toast = $("toast");
-const appWindow = getCurrentWindow();
 
 const isMac = navigator.userAgent.includes("Mac");
 const SAVE_DELAY_MS = 500;
 const SAVED_VISIBLE_MS = 2000;
 const MAX_RECENT = 5;
+const TAP_REVEAL_MS = 5000;
 
 const state = {
   vault: null as string | null,
@@ -125,7 +125,7 @@ $("pill-list").addEventListener("click", toggleSidebar);
 
 // ---------- window controls (custom title bar on Windows and Linux) ----------
 
-if (!isMac) {
+if (!isMac && !isMobile) {
   $("drag-strip").hidden = false;
   $("window-controls").hidden = false;
   $("win-min").addEventListener("click", () => appWindow.minimize());
@@ -268,9 +268,15 @@ function drawRecent() {
 }
 
 function showWelcome() {
-  welcomeText.textContent = state.vault
-    ? `${state.notes.length} notes in ${basename(state.vault.replace(/\\/g, "/"))}. Press ${isMac ? "⌘" : "Ctrl+"}P to open one.`
-    : `Open a folder of Markdown notes to begin.`;
+  if (isMobile) {
+    welcomeText.textContent = state.notes.length
+      ? `${state.notes.length} ${state.notes.length === 1 ? "note" : "notes"}. Tap ☰ at the top to open one.`
+      : "No notes here yet. Set up sync to bring your notes from your computer.";
+  } else {
+    welcomeText.textContent = state.vault
+      ? `${state.notes.length} notes in ${basename(state.vault.replace(/\\/g, "/"))}. Press ${isMac ? "⌘" : "Ctrl+"}P to open one.`
+      : `Open a folder of Markdown notes to begin.`;
+  }
   drawRecent();
   show("welcome");
   drawPill();
@@ -291,7 +297,11 @@ function drawNoteList() {
       }
       button.append(noteName(path));
       button.classList.toggle("current", path === state.path);
-      button.addEventListener("click", () => openNote(path));
+      button.addEventListener("click", () => {
+        // On a phone the note list covers the note, so it closes once you have chosen.
+        if (isMobile) document.body.classList.remove("sidebar-open");
+        openNote(path);
+      });
       li.append(button);
       return li;
     }),
@@ -433,6 +443,10 @@ const syncUi = createSync({
   },
 });
 
+// No pointer to hover with: tapping the handle at the top shows the pill for a few seconds.
+$("grip").addEventListener("pointerdown", () => pill.flash(TAP_REVEAL_MS));
+$("welcome-sync").addEventListener("click", () => syncSettings.open());
+
 pillSync.addEventListener("click", () => {
   if (pillSync.dataset.status === "conflict") openSwitcher("find", "(conflict");
   else syncUi.run(true);
@@ -570,19 +584,20 @@ const hasVault = () => !!state.vault;
 const hasNote = () => !!state.path;
 
 // One list drives the keyboard shortcuts, the actions panel and the start screen.
-const actions: Action[] = [
+const allActions: Action[] = [
   { group: "Note", key: "N", label: "New note", run: () => openSwitcher("create"), enabled: hasVault },
   { group: "Note", key: "P", label: "Find or create a note", run: () => openSwitcher(), enabled: hasVault },
   { group: "Note", key: "E", label: "Switch between reading and writing", run: () => setMode(state.mode === "read" ? "edit" : "read"), enabled: hasNote },
   { group: "Note", key: "S", label: "Save now", run: flush, enabled: hasNote },
-  { group: "Note", key: "E", shift: true, label: "Export as PDF", run: openExport, enabled: hasNote },
+  { group: "Note", key: "E", shift: true, label: "Export as PDF", run: openExport, enabled: hasNote, desktopOnly: true },
   { group: "View", key: "B", label: "Show or hide the note list", run: toggleSidebar, enabled: hasVault },
   { group: "View", key: "F", shift: true, label: "Focus mode (Esc to leave)", run: toggleFocus },
-  { group: "Folder", key: "O", label: "Open a folder of notes", run: () => folderPicker.open() },
+  { group: "Folder", key: "O", label: "Open a folder of notes", run: () => folderPicker.open(), desktopOnly: true },
   { group: "Folder", key: "H", label: "Back to start screen", run: goHome, enabled: hasNote },
   { group: "Sync", label: "Sync now", run: () => syncUi.run(true), enabled: () => syncUi.enabledHere() },
   { group: "Sync", label: "Sync settings…", run: () => syncSettings.open() },
 ];
+const actions = allActions.filter((action) => !(isMobile && action.desktopOnly));
 
 const palette = setupPalette($("palette"), actions, isMac);
 const ALL_ACTIONS_KEY = "K";
@@ -663,7 +678,8 @@ appWindow.onCloseRequested(flush);
 // ---------- start ----------
 
 (async () => {
-  const lastVault = remember.get("vault");
+  // A phone has one notes folder inside the app, filled by sync; a computer reopens the last folder.
+  const lastVault = isMobile ? await invoke<string>("default_vault") : remember.get("vault");
   if (lastVault && (await openVault(lastVault))) {
     const lastNote = remember.get("lastNote");
     if (lastNote && state.notes.includes(lastNote)) await openNote(lastNote);

@@ -179,6 +179,15 @@ async fn export_pdf(
     Ok(out.to_string_lossy().into_owned())
 }
 
+/// The notes folder of the Android app: private to the app, so it needs no permissions.
+/// A phone has no folder picker; sync fills this folder.
+#[tauri::command]
+fn default_vault(app: AppHandle) -> Result<String, String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?.join("Quill");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.to_string_lossy().into_owned())
+}
+
 fn percent_decode(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -221,6 +230,7 @@ pub fn run() {
             write_note,
             save_asset,
             export_pdf,
+            default_vault,
             folders::list_folder,
             folders::default_folder,
             sync::sync_get_config,

@@ -9,6 +9,8 @@ export interface Action {
   key?: string;
   shift?: boolean;
   run: () => unknown;
+  /** Left out on phones (no folder picker, no printing). */
+  desktopOnly?: boolean;
   /** Disabled actions are shown greyed out and cannot run. */
   enabled?: () => boolean;
 }
