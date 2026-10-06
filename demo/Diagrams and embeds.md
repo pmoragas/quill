@@ -1,4 +1,4 @@
-# Diagrams and embeds
+# Diagrams and embeds 2
 
 ## A flowchart
 
