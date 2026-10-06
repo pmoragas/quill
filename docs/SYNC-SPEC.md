@@ -35,7 +35,7 @@ Three parts:
 
 Why an API instead of devices talking to storage directly: storage keys on a phone are hard to protect and impossible to scope tightly. A per-device token can be revoked if a phone is lost, without touching the other devices.
 
-**Decision 1, provider: Cloudflare R2 with the sync API on Cloudflare Workers.** The free tier covers a personal vault (10 GB storage, free egress) and the API runs next to the bucket. Considered: AWS S3 with Lambda (small cost, more setup) and a third-party synced folder (no control over conflicts). R2 support for conditional writes (`If-Match`, `If-None-Match`) is to be confirmed in S1; if missing, the Worker enforces the version check itself.
+**Decision 1, provider: Cloudflare R2 with the sync API on Cloudflare Workers.** The free tier covers a personal vault (10 GB storage, free egress) and the API runs next to the bucket. Considered: AWS S3 with Lambda (small cost, more setup) and a third-party synced folder (no control over conflicts). R2 enforces conditional writes (`If-Match`, `If-None-Match`); confirmed against the real bucket in S1.
 
 ## Sync protocol
 
@@ -122,7 +122,7 @@ A vault of notes and images is a few hundred MB at most. On R2 this stays inside
 
 ## Milestones
 
-1. **S1, backend:** bucket, sync API with device tokens, conditional writes. *Built in `sync-api/` and tested against emulated R2 and a local Worker. Deploying it and running `npm run smoke` against the real bucket confirms R2's version checks.*
+1. **S1, backend:** bucket, sync API with device tokens, conditional writes. *Done: deployed at `https://quill-sync.pmoragas.workers.dev` and verified against the real R2 bucket (`npm run smoke`): R2 enforces `If-Match` and `If-None-Match`, so the Worker needs no check of its own.*
 2. **S2, desktop sync:** sync engine, sync record, conflict copies, pill status.
 3. **S3, Android:** Tauri Android build, phone layout, sync on resume.
 4. **S4, hardening:** secure token storage, size limits; end-to-end encryption if wanted later.
