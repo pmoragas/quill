@@ -315,7 +315,6 @@ async fn hidden_files_temp_files_and_big_files_are_not_synced() {
     desktop.write(".quill/private.json", "{}");
     desktop.write(".hidden.md", "x");
     desktop.write("a.md.tmp", "half written");
-    desktop.write("bad\u{1}name.md", "control character");
     let big = local_path(desktop.dir.path(), "big.bin");
     fs::write(&big, vec![0u8; (MAX_FILE_BYTES + 1) as usize]).unwrap();
 
@@ -379,4 +378,16 @@ fn civil_dates_are_correct() {
     assert_eq!(civil_date(951_782_400), (2000, 2, 29));
     assert_eq!(civil_date(1_700_000_000), (2023, 11, 14));
     assert_eq!(civil_date(1_791_331_200), (2026, 10, 7));
+}
+
+#[test]
+fn names_the_api_would_refuse_are_not_synced() {
+    // Checked on the name itself: Windows cannot even create some of these files.
+    for good in ["a.md", "Notes/Visió general.md", "assets/img 1.png"] {
+        assert!(syncable_name(good), "{good}");
+    }
+    for bad in ["", "/a.md", "a//b.md", "a/../b.md", "./a.md", "a\\b.md", "C:/x.md", "bad\u{1}name.md"] {
+        assert!(!syncable_name(bad), "{bad:?}");
+    }
+    assert!(!syncable_name(&"x".repeat(513)));
 }
