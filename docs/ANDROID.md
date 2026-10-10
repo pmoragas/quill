@@ -6,7 +6,7 @@ The Android app is the same code as the desktop app, built with Tauri 2. It keep
 
 1. Download `Quill_<version>_android-arm64.apk` from the [latest release](https://github.com/pmoragas/quill/releases/latest) on the phone.
 2. Open it. Android asks to allow installs from this source (your browser or file manager); allow it for this install.
-3. Open Quill, tap **Sync settings…**, enter the server address and this phone's token, tick **Sync this folder**, and save. The first sync shows what it will copy and waits for your confirmation.
+3. Open Quill, tap **Sync settings…**, paste this phone's token (the server address is built in), tick **Sync this folder**, and save. The first sync shows what it will copy and waits for your confirmation.
 
 The APK is for 64-bit ARM phones, which is almost every phone made since 2017. Updating means installing a newer APK over the old one; notes are kept.
 

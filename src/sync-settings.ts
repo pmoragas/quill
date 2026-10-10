@@ -1,4 +1,5 @@
-// The "Sync settings" panel: server address, device token, device name, which folder syncs.
+// The "Sync settings" panel: device token, device name, which folder syncs. The server address is fixed
+// (one server, hidden in the panel); a different address saved earlier is kept.
 import { invoke } from "@tauri-apps/api/core";
 import { isMobile } from "./platform";
 import type { ConfigView } from "./sync";
@@ -9,6 +10,9 @@ export interface SettingsHooks {
   /** Called after settings were saved or sync was stopped. */
   changed: () => void;
 }
+
+/** The one sync server this app talks to. */
+const DEFAULT_SERVER_URL = "https://quill-sync.pmoragas.workers.dev";
 
 /** Shown in conflict copies, so it says where the other version came from. */
 const defaultDeviceName = isMobile ? "phone" : "desktop";
@@ -34,7 +38,7 @@ export function setupSyncSettings(root: HTMLElement, hooks: SettingsHooks) {
 
   function draw() {
     if (!config) return;
-    field("url").value = config.url;
+    field("url").value = config.url || DEFAULT_SERVER_URL;
     field("token").value = "";
     field("token").placeholder = config.hasToken ? "Saved (leave empty to keep it)" : "Paste the token for this device";
     field("device").value = config.device || defaultDeviceName;
@@ -113,7 +117,7 @@ export function setupSyncSettings(root: HTMLElement, hooks: SettingsHooks) {
       say("");
       draw();
       root.hidden = false;
-      field(config.url ? "token" : "url").focus();
+      field("token").focus();
     },
     close,
     isOpen: () => !root.hidden,

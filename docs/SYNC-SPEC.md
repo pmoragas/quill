@@ -124,7 +124,7 @@ To verify early: embeds (iframes over Quill's asset protocol) and the official p
 - **Progress is kept:** if the connection drops mid-pass, what was synced stays synced and the next pass continues.
 - **One folder:** sync is switched on for one folder at a time (saved in the app's settings), so opening another folder never mixes two vaults into one bucket.
 - **First sync asks first:** a folder with no sync record shows what Quill will upload or download, and runs only after you confirm. The backend refuses an unconfirmed first run too.
-- **Settings** (action "Sync settings…"): server address (https, or http on this machine for development), device token, device name. The token is kept in the app's settings file, readable only by the user on Linux and macOS, and never sent back to the interface. Operating-system secure storage is S4.
+- **Settings** (action "Sync settings…"): device token and device name. The server address is built in (`https://quill-sync.pmoragas.workers.dev`) and hidden in the panel. The token is kept in the app's settings file, readable only by the user on Linux and macOS, and never sent back to the interface. Operating-system secure storage is S4.
 - **Status** in the pill: Synced, Syncing…, Offline, "Check sync token", "Sync failed · Retry", or "n conflicts" (click to list the copies in the note finder). Conflicts also show a toast.
 - **When it runs:** after opening the folder, 3 s after a save, every 5 minutes, when the window returns after 30 s, when the network returns, and from "Sync now". Automatic runs closer than 5 s apart are skipped.
 - **Open note:** if sync downloads a new version of the note that is open (and it has no unsaved edits) it reloads; if sync deleted it, Quill returns to the start screen.

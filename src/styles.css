@@ -1340,6 +1340,10 @@ body.focus:not(.save-error) #pill {
   padding: 18px 20px 6px;
 }
 
+#sync-settings label[hidden] {
+  display: none;
+}
+
 #sync-settings label {
   display: flex;
   flex-direction: column;
